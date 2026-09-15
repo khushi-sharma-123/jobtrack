@@ -63,7 +63,7 @@ const jobApplicationSchema = new mongoose.Schema(
     },
 
     // ==============================
-    // New: Application Tags
+    // Application Tags
     // ==============================
     tags: {
       type: [String],
@@ -71,7 +71,7 @@ const jobApplicationSchema = new mongoose.Schema(
     },
 
     // ==============================
-    // New: Recruiter Information
+    // Recruiter Information
     // ==============================
     recruiterName: {
       type: String,
@@ -98,12 +98,54 @@ const jobApplicationSchema = new mongoose.Schema(
     },
 
     // ==============================
-    // New: Interview Notes
+    // Interview Notes
     // ==============================
     interviewNotes: {
       type: String,
       trim: true,
       default: "",
+    },
+
+    // ==============================
+    // Interview Scheduling
+    // ==============================
+    interviewDate: {
+      type: Date,
+      default: null,
+    },
+
+    interviewDuration: {
+      type: Number,
+      default: 60,
+      min: 15,
+    },
+
+    interviewType: {
+      type: String,
+      enum: ["Online", "Offline", "Phone"],
+      default: "Online",
+    },
+
+    interviewLocation: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    // ==============================
+    // Interview Reminder
+    // ==============================
+    interviewReminderSent: {
+      type: Boolean,
+      default: false,
+    },
+
+    // ==============================
+    // Calendar Integration
+    // ==============================
+    calendarEventId: {
+      type: String,
+      default: null,
     },
   },
   {

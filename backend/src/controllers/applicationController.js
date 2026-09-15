@@ -3,6 +3,14 @@ const mongoose = require("mongoose");
 const JobApplication = require("../models/JobApplication");
 const ApplicationActivity = require("../models/ApplicationActivity");
 
+
+const {
+  generateGoogleCalendarUrl,
+} = require("../utils/calendarUtils");
+const {
+  sendInterviewScheduledEmail,
+} = require("../services/emailService");
+
 const allowedJobTypes = [
   "Full-time",
   "Part-time",
@@ -62,6 +70,40 @@ const validateTags = (tags) => {
   return null;
 };
 
+
+const normalizeJobUrl = (url) => {
+  if (!url) return "";
+
+  try {
+    const parsedUrl = new URL(url.trim());
+
+    const trackingParams = [
+      "utm_source",
+      "utm_medium",
+      "utm_campaign",
+      "utm_term",
+      "utm_content",
+      "fbclid",
+      "gclid",
+      "dclid",
+      "msclkid",
+      "ref",
+      "referrer",
+    ];
+
+    trackingParams.forEach((param) => {
+      parsedUrl.searchParams.delete(param);
+    });
+
+    // Remove trailing slash from pathname
+    parsedUrl.pathname = parsedUrl.pathname.replace(/\/+$/, "");
+
+    return parsedUrl.toString();
+  } catch (error) {
+    return url.trim();
+  }
+};
+
 // ==========================================
 // Create Application
 // ==========================================
@@ -84,6 +126,12 @@ const createApplication = async (req, res) => {
       recruiterPhone,
       recruiterLinkedin,
       interviewNotes,
+       
+      // Interview details
+  interviewDate,
+  interviewDuration,
+  interviewType,
+  interviewLocation,
     } = req.body;
 
     if (!company || !position) {
@@ -112,6 +160,52 @@ const createApplication = async (req, res) => {
       });
     }
 
+// ==========================================
+// Normalize Job URL
+// ==========================================
+const normalizedJobUrl = normalizeJobUrl(jobUrl);
+
+
+// ==========================================
+// Prevent Duplicate Applications
+// ==========================================
+if (normalizedJobUrl) {
+  const existingApplication = await JobApplication.findOne({
+    user: req.user.userId,
+    jobUrl: normalizedJobUrl,
+  });
+
+  if (existingApplication) {
+    return res.status(409).json({
+      message: "This job application is already tracked",
+      application: existingApplication,
+    });
+  }
+}
+
+// ==========================================
+// Fallback Duplicate Check
+// Used when job URL is not available
+// ==========================================
+if (!normalizedJobUrl) {
+  const existingApplication = await JobApplication.findOne({
+    user: req.user.userId,
+    company: { $regex: `^${company.trim()}$`, $options: "i" },
+    position: { $regex: `^${position.trim()}$`, $options: "i" },
+    location: {
+      $regex: `^${(location || "").trim()}$`,
+      $options: "i",
+    },
+  });
+
+  if (existingApplication) {
+    return res.status(409).json({
+      message: "A similar job application is already tracked",
+      application: existingApplication,
+    });
+  }
+}
+
     const application = await JobApplication.create({
       user: req.user.userId,
       company,
@@ -122,7 +216,7 @@ const createApplication = async (req, res) => {
       appliedDate,
       followUpDate,
       followUpCompleted,
-      jobUrl,
+    jobUrl: normalizedJobUrl,
       notes,
       tags: tags
         ? [...new Set(tags.map((tag) => tag.trim()))]
@@ -132,6 +226,10 @@ const createApplication = async (req, res) => {
       recruiterPhone,
       recruiterLinkedin,
       interviewNotes,
+interviewDate,
+interviewDuration,
+interviewType,
+interviewLocation,
     });
 
     await addActivity({
@@ -140,6 +238,38 @@ const createApplication = async (req, res) => {
       type: "created",
       message: `Application created for ${application.company}`,
     });
+
+    // ==========================================
+// Send Interview Scheduled Email
+// ==========================================
+if (status === "Interview" && interviewDate) {
+  try {
+    const User = require("../models/User");
+
+    const user = await User.findById(req.user.userId);
+
+    if (user && user.email) {
+      await sendInterviewScheduledEmail({
+        to: user.email,
+        userName: user.name,
+        company: application.company,
+        position: application.position,
+        interviewDate: application.interviewDate,
+        interviewType: application.interviewType,
+        interviewLocation: application.interviewLocation,
+      });
+
+      console.log(
+        "Interview scheduled email sent successfully"
+      );
+    }
+  } catch (emailError) {
+    console.error(
+      "Interview email failed:",
+      emailError.message
+    );
+  }
+}
 
     res.status(201).json({
       message: "Application added successfully",
@@ -860,26 +990,67 @@ const updateInterviewInfo = async (req, res) => {
       recruiterPhone,
       recruiterLinkedin,
       interviewNotes,
+      interviewDate,
+      interviewDuration,
+      interviewType,
+      interviewLocation,
     } = req.body;
 
+    // ==========================================
+    // Validation
+    // ==========================================
+
+    const allowedInterviewTypes = [
+      "Online",
+      "Offline",
+      "Phone",
+    ];
+
+    if (
+      interviewType !== undefined &&
+      !allowedInterviewTypes.includes(interviewType)
+    ) {
+      return res.status(400).json({
+        message: "Invalid interview type",
+      });
+    }
+
+    if (interviewDate !== undefined && interviewDate !== null) {
+      const parsedDate = new Date(interviewDate);
+
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({
+          message: "Invalid interview date",
+        });
+      }
+
+      if (parsedDate <= new Date()) {
+        return res.status(400).json({
+          message: "Interview date must be in the future",
+        });
+      }
+    }
+
+    if (interviewDuration !== undefined) {
+      const duration = Number(interviewDuration);
+
+      if (Number.isNaN(duration) || duration < 15) {
+        return res.status(400).json({
+          message:
+            "Interview duration must be at least 15 minutes",
+        });
+      }
+    }
+
+    // ==========================================
+    // Find Application
+    // ==========================================
+
     const application =
-      await JobApplication.findOneAndUpdate(
-        {
-          _id: req.params.id,
-          user: req.user.userId,
-        },
-        {
-          recruiterName: recruiterName ?? "",
-          recruiterEmail: recruiterEmail ?? "",
-          recruiterPhone: recruiterPhone ?? "",
-          recruiterLinkedin: recruiterLinkedin ?? "",
-          interviewNotes: interviewNotes ?? "",
-        },
-        {
-          new: true,
-          runValidators: true,
-        }
-      );
+      await JobApplication.findOne({
+        _id: req.params.id,
+        user: req.user.userId,
+      });
 
     if (!application) {
       return res.status(404).json({
@@ -887,17 +1058,206 @@ const updateInterviewInfo = async (req, res) => {
       });
     }
 
-    await addActivity({
-      application: application._id,
-      user: req.user.userId,
-      type: "note_added",
-      message: "Recruiter or interview information updated",
-    });
+    // ==========================================
+    // Detect Changes
+    // ==========================================
+
+    const changes = [];
+
+    if (
+      recruiterName !== undefined &&
+      application.recruiterName !== recruiterName
+    ) {
+      changes.push("Recruiter name updated");
+    }
+
+    if (
+      recruiterEmail !== undefined &&
+      application.recruiterEmail !== recruiterEmail
+    ) {
+      changes.push("Recruiter email updated");
+    }
+
+    if (
+      recruiterPhone !== undefined &&
+      application.recruiterPhone !== recruiterPhone
+    ) {
+      changes.push("Recruiter phone updated");
+    }
+
+    if (
+      recruiterLinkedin !== undefined &&
+      application.recruiterLinkedin !== recruiterLinkedin
+    ) {
+      changes.push("Recruiter LinkedIn updated");
+    }
+
+    if (
+      interviewNotes !== undefined &&
+      application.interviewNotes !== interviewNotes
+    ) {
+      changes.push("Interview notes updated");
+    }
+
+    if (
+      interviewDate !== undefined &&
+      String(application.interviewDate || "") !==
+        String(interviewDate || "")
+    ) {
+      changes.push("Interview date updated");
+    }
+
+    if (
+      interviewDuration !== undefined &&
+      application.interviewDuration !==
+        Number(interviewDuration)
+    ) {
+      changes.push("Interview duration updated");
+    }
+
+    if (
+      interviewType !== undefined &&
+      application.interviewType !== interviewType
+    ) {
+      changes.push("Interview type updated");
+    }
+
+    if (
+      interviewLocation !== undefined &&
+      application.interviewLocation !== interviewLocation
+    ) {
+      changes.push("Interview location updated");
+    }
+
+    // ==========================================
+    // Update Recruiter Information
+    // ==========================================
+
+    if (recruiterName !== undefined) {
+      application.recruiterName = recruiterName;
+    }
+
+    if (recruiterEmail !== undefined) {
+      application.recruiterEmail = recruiterEmail;
+    }
+
+    if (recruiterPhone !== undefined) {
+      application.recruiterPhone = recruiterPhone;
+    }
+
+    if (recruiterLinkedin !== undefined) {
+      application.recruiterLinkedin = recruiterLinkedin;
+    }
+
+    if (interviewNotes !== undefined) {
+      application.interviewNotes = interviewNotes;
+    }
+
+    // ==========================================
+    // Update Interview Information
+    // ==========================================
+
+    let interviewWasScheduled = false;
+
+    if (interviewDate !== undefined) {
+      application.interviewDate =
+        interviewDate || null;
+
+      application.interviewReminderSent = false;
+
+      application.calendarEventId = null;
+
+      if (interviewDate) {
+        interviewWasScheduled = true;
+      }
+    }
+
+    if (interviewDuration !== undefined) {
+      application.interviewDuration =
+        Number(interviewDuration);
+
+      application.calendarEventId = null;
+    }
+
+    if (interviewType !== undefined) {
+      application.interviewType = interviewType;
+
+      application.calendarEventId = null;
+    }
+
+    if (interviewLocation !== undefined) {
+      application.interviewLocation =
+        interviewLocation;
+
+      application.calendarEventId = null;
+    }
+
+    // ==========================================
+    // Save Application
+    // ==========================================
+
+    const updatedApplication =
+      await application.save();
+
+    // ==========================================
+    // Timeline Activity
+    // ==========================================
+
+    if (changes.length > 0) {
+      await addActivity({
+        application: updatedApplication._id,
+        user: req.user.userId,
+        type: "note_added",
+        message: changes.join(" • "),
+      });
+    }
+
+    // ==========================================
+    // Send Interview Email
+    // ==========================================
+
+    if (interviewWasScheduled) {
+      try {
+        const User = require("../models/User");
+
+        const user = await User.findById(
+          req.user.userId
+        );
+
+        if (user && user.email) {
+          await sendInterviewScheduledEmail({
+            to: user.email,
+            userName: user.name,
+            company: updatedApplication.company,
+            position: updatedApplication.position,
+            interviewDate:
+              updatedApplication.interviewDate,
+            interviewType:
+              updatedApplication.interviewType,
+            interviewLocation:
+              updatedApplication.interviewLocation,
+          });
+
+          console.log(
+            "Interview scheduled email sent successfully"
+          );
+        }
+      } catch (emailError) {
+        console.error(
+          "Interview email failed:",
+          emailError.message
+        );
+      }
+    }
+
+    // ==========================================
+    // Response
+    // ==========================================
 
     res.json({
       message:
         "Interview information updated successfully",
-      application,
+      application: updatedApplication,
     });
   } catch (error) {
     console.error(
@@ -911,7 +1271,6 @@ const updateInterviewInfo = async (req, res) => {
     });
   }
 };
-
 // ==========================================
 // Get Application Timeline
 // ==========================================
@@ -1092,6 +1451,48 @@ const deleteApplication = async (req, res) => {
   }
 };
 
+const generateCalendarEvent = async (req, res) => {
+  try {
+    const application = await JobApplication.findOne({
+      _id: req.params.id,
+      user: req.user.userId,
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        message: "Application not found",
+      });
+    }
+
+    if (!application.interviewDate) {
+      return res.status(400).json({
+        message: "Interview date is not available",
+      });
+    }
+
+    const calendarUrl = generateGoogleCalendarUrl({
+      company: application.company,
+      position: application.position,
+      interviewDate: application.interviewDate,
+      interviewDuration: application.interviewDuration,
+      interviewType: application.interviewType,
+      interviewLocation: application.interviewLocation,
+      interviewNotes: application.interviewNotes,
+    });
+
+    res.status(200).json({
+      message: "Calendar event generated successfully",
+      calendarUrl,
+    });
+  } catch (error) {
+    console.error("Calendar event error:", error);
+
+    res.status(500).json({
+      message: "Failed to generate calendar event",
+    });
+  }
+};
+
 module.exports = {
   createApplication,
   getApplications,
@@ -1106,4 +1507,5 @@ module.exports = {
   getApplicationTimeline,
   exportApplicationsCSV,
   deleteApplication,
+    generateCalendarEvent,
 };

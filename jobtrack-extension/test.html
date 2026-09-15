@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <title>Frontend Developer Intern - Microsoft</title>
+
+  <meta
+    name="description"
+    content="Frontend Developer Intern opportunity at Microsoft"
+  />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+    }
+
+    .job-card {
+      max-width: 600px;
+      padding: 25px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+    }
+
+    .company-name,
+    .job-location,
+    .job-type {
+      margin: 10px 0;
+    }
+
+    button {
+      padding: 12px 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="job-card">
+
+    <h1 class="job-title">
+      Frontend Developer Intern
+    </h1>
+
+    <div class="company-name">
+      Microsoft
+    </div>
+
+    <div class="job-location">
+      Hyderabad, Telangana, India
+    </div>
+
+    <div class="job-type">
+      Internship
+    </div>
+
+    <button onclick="submitApplication()">
+      Apply Now
+    </button>
+
+    <div id="result"></div>
+
+  </div>
+
+  <script src="extractors/genericExtractor.js"></script>
+
+  <script>
+    function submitApplication() {
+      document.getElementById("result").innerText =
+        "Your application was successfully submitted";
+    }
+
+    console.log(
+      "Generic Job Data:",
+      extractGenericJobData()
+    );
+  </script>
+
+</body>
+</html>

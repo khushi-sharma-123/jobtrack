@@ -17,6 +17,13 @@ function AddApplication() {
     jobUrl: "",
     notes: "",
     tags: [],
+
+     // Interview details
+  interviewDate: "",
+  interviewDuration: 60,
+  interviewType: "Online",
+  interviewLocation: "",
+  interviewNotes: "",
   });
 
   const [tagInput, setTagInput] = useState("");
@@ -242,6 +249,118 @@ function AddApplication() {
               </div>
 
             </div>
+              
+              {/* Interview Details */}
+{formData.status === "Interview" && (
+  <div className="border-t border-gray-200 pt-6">
+    <div className="mb-4">
+      <h3 className="text-lg font-semibold text-gray-900">
+        Interview Details
+      </h3>
+
+      <p className="text-sm text-gray-500 mt-1">
+        Add the interview details now or update them later.
+      </p>
+    </div>
+
+    {/* Date & Duration */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div>
+        <label className="block font-medium mb-2">
+          Interview Date & Time
+        </label>
+
+        <input
+          type="datetime-local"
+          name="interviewDate"
+          value={formData.interviewDate}
+          onChange={handleChange}
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+        />
+
+        <p className="text-xs text-gray-500 mt-1">
+          Optional — you can schedule it later.
+        </p>
+      </div>
+
+      <div>
+        <label className="block font-medium mb-2">
+          Duration
+        </label>
+
+        <select
+          name="interviewDuration"
+          value={formData.interviewDuration}
+          onChange={handleChange}
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+        >
+          <option value={15}>15 minutes</option>
+          <option value={30}>30 minutes</option>
+          <option value={45}>45 minutes</option>
+          <option value={60}>1 hour</option>
+          <option value={90}>1.5 hours</option>
+          <option value={120}>2 hours</option>
+        </select>
+      </div>
+    </div>
+
+    {/* Interview Type */}
+    <div className="mt-5">
+      <label className="block font-medium mb-2">
+        Interview Type
+      </label>
+
+      <select
+        name="interviewType"
+        value={formData.interviewType}
+        onChange={handleChange}
+        className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+      >
+        <option value="Online">Online</option>
+        <option value="Offline">Offline</option>
+        <option value="Phone">Phone</option>
+      </select>
+    </div>
+
+    {/* Location / Meeting Link */}
+    <div className="mt-5">
+      <label className="block font-medium mb-2">
+        {formData.interviewType === "Online"
+          ? "Meeting Link"
+          : "Location"}
+      </label>
+
+      <input
+        type="text"
+        name="interviewLocation"
+        value={formData.interviewLocation}
+        onChange={handleChange}
+        placeholder={
+          formData.interviewType === "Online"
+            ? "https://meet.google.com/..."
+            : "e.g. Company Office, Jaipur"
+        }
+        className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+      />
+    </div>
+
+    {/* Interview Notes */}
+    <div className="mt-5">
+      <label className="block font-medium mb-2">
+        Interview Notes
+      </label>
+
+      <textarea
+        name="interviewNotes"
+        value={formData.interviewNotes}
+        onChange={handleChange}
+        placeholder="Add interview preparation notes, topics to revise, recruiter instructions..."
+        rows="4"
+        className="w-full border border-gray-300 rounded-lg px-4 py-3 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+      />
+    </div>
+  </div>
+)}
 
             {/* Applied Date + Follow-up Date */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

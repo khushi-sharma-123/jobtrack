@@ -29,9 +29,20 @@ const apiLimiter = rateLimit({
 
 app.use("/api", apiLimiter);
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "chrome-extension://mbabflfabnpoipfjlhkmmhdcnkpmccjk",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -50,6 +61,10 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+console.log("EMAIL_USER loaded:", process.env.EMAIL_USER);
+console.log("EMAIL_PASS loaded:", !!process.env.EMAIL_PASS);
+console.log("EMAIL_PASS length:", process.env.EMAIL_PASS?.length);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

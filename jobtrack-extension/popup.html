@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JobTrack</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>JobTrack</h1>
+
+    <p class="subtitle">
+      Track your job applications automatically
+    </p>
+
+    <div id="loginSection">
+
+      <input
+        id="email"
+        type="email"
+        placeholder="Email"
+      />
+
+      <input
+        id="password"
+        type="password"
+        placeholder="Password"
+      />
+
+      <button id="loginBtn">
+        Login
+      </button>
+
+      <p id="message"></p>
+
+    </div>
+
+    <div id="loggedInSection" style="display: none;">
+
+      <p id="welcome"></p>
+
+      <button id="logoutBtn">
+        Logout
+      </button>
+
+    </div>
+
+  </div>
+
+  <script src="popup.js"></script>
+
+</body>
+</html>

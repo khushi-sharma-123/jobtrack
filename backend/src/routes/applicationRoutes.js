@@ -14,6 +14,7 @@ const {
   getApplicationTimeline,
   exportApplicationsCSV,
   deleteApplication,
+   generateCalendarEvent,
 } = require("../controllers/applicationController");
 
 const protect = require("../middleware/authMiddleware");
@@ -90,10 +91,17 @@ router.put(
   updateApplication
 );
 
+router.get(
+  "/:id/calendar",
+  protect,
+  generateCalendarEvent
+);
+
 router.delete(
   "/:id",
   protect,
   deleteApplication
 );
+
 
 module.exports = router;
