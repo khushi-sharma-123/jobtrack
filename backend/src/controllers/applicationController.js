@@ -8,6 +8,7 @@ const {
   generateGoogleCalendarUrl,
 } = require("../utils/calendarUtils");
 const {
+    sendEmail,
   sendInterviewScheduledEmail,
 } = require("../services/emailService");
 
@@ -1492,6 +1493,179 @@ const generateCalendarEvent = async (req, res) => {
     });
   }
 };
+// ==========================================
+// Send Follow-Up Email
+// ==========================================
+const sendFollowUpEmail = async (req, res) => {
+  try {
+    const {
+      applicationId,
+      to,
+      subject,
+      message,
+    } = req.body;
+
+    // ==========================================
+    // Validation
+    // ==========================================
+
+    if (!applicationId) {
+      return res.status(400).json({
+        message: "Application ID is required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(applicationId)) {
+      return res.status(400).json({
+        message: "Invalid application ID",
+      });
+    }
+
+    const recipientEmail = (to || "").trim();
+
+    if (!recipientEmail) {
+      return res.status(400).json({
+        message: "Recipient email is required",
+      });
+    }
+
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(recipientEmail)) {
+      return res.status(400).json({
+        message: "Invalid recipient email",
+      });
+    }
+
+    const cleanSubject = (subject || "").trim();
+    const cleanMessage = (message || "").trim();
+
+    if (!cleanSubject) {
+      return res.status(400).json({
+        message: "Email subject is required",
+      });
+    }
+
+    if (!cleanMessage) {
+      return res.status(400).json({
+        message: "Email message is required",
+      });
+    }
+
+    // ==========================================
+    // Find application belonging to current user
+    // ==========================================
+
+    const application = await JobApplication.findOne({
+      _id: applicationId,
+      user: req.user.userId,
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        message: "Application not found",
+      });
+    }
+
+    // ==========================================
+    // Escape HTML
+    // ==========================================
+
+    const safeMessage = cleanMessage
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
+      .replace(/\r\n/g, "\n")
+      .replace(/\n/g, "<br />");
+
+    const html = `
+      <div
+        style="
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 650px;
+          margin: auto;
+        "
+      >
+        ${safeMessage}
+
+        <br />
+        <br />
+
+        <hr
+          style="
+            border: 0;
+            border-top: 1px solid #e5e7eb;
+          "
+        />
+
+        <p
+          style="
+            color: #777;
+            font-size: 12px;
+          "
+        >
+          Sent using JobTrack
+        </p>
+      </div>
+    `;
+
+    // ==========================================
+    // Send Email
+    // ==========================================
+
+    const emailInfo = await sendEmail({
+      to: recipientEmail,
+      subject: cleanSubject,
+      html,
+    });
+
+    // ==========================================
+    // Save recruiter email for future use
+    // ==========================================
+
+    application.recruiterEmail = recipientEmail;
+
+    await application.save();
+
+    // ==========================================
+    // Add Timeline Activity
+    // ==========================================
+
+    await addActivity({
+      application: application._id,
+      user: req.user.userId,
+      type: "note_added",
+      message: `Follow-up email sent to ${recipientEmail}`,
+    });
+
+    // ==========================================
+    // Response
+    // ==========================================
+
+    return res.status(200).json({
+      message: "Email sent successfully",
+      messageId: emailInfo.messageId,
+      application,
+    });
+
+  } catch (error) {
+    console.error(
+      "Send follow-up email error:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        error.message ||
+        "Failed to send follow-up email",
+    });
+  }
+};
 
 module.exports = {
   createApplication,
@@ -1508,4 +1682,5 @@ module.exports = {
   exportApplicationsCSV,
   deleteApplication,
     generateCalendarEvent,
+     sendFollowUpEmail,
 };

@@ -15,6 +15,7 @@ const authRoutes = require("./routes/authRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const resumeRoutes = require("./routes/resumeRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+const emailRoutes = require("./routes/emailRoutes");
 
 const app = express();
 app.use(helmet());
@@ -53,6 +54,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/resume", resumeRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/email", emailRoutes);
 
 connectDB();
 

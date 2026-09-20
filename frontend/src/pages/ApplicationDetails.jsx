@@ -47,7 +47,10 @@ function ApplicationDetails() {
   const [saveError, setSaveError] = useState("");
 
   // Calendar
-  const [addingToCalendar, setAddingToCalendar] = useState(false);
+  // Calendar
+const [addingToCalendar, setAddingToCalendar] = useState(false);
+const [calendarMessage, setCalendarMessage] = useState("");
+const [calendarError, setCalendarError] = useState("");
 
   // Delete modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -212,40 +215,64 @@ function ApplicationDetails() {
   };
 
   // ==========================================
-  // Add Interview To Google Calendar
-  // ==========================================
+// Add Interview To Google Calendar
+// ==========================================
 
-  const handleAddToCalendar = async () => {
-    try {
-      setAddingToCalendar(true);
+const handleAddToCalendar = async () => {
+  setCalendarMessage("");
+  setCalendarError("");
 
-      const response = await API.get(
-        `/applications/${id}/calendar`
+  if (!application?.interviewDate) {
+    setCalendarError(
+      "Please schedule an interview date before adding it to Google Calendar."
+    );
+    return;
+  }
+
+  try {
+    setAddingToCalendar(true);
+
+    const response = await API.get(
+      `/applications/${id}/calendar`
+    );
+
+    const calendarUrl = response.data.calendarUrl;
+
+    if (!calendarUrl) {
+      throw new Error(
+        "Calendar link was not generated."
       );
-
-      const calendarUrl =
-        response.data.calendarUrl;
-
-      window.open(
-        calendarUrl,
-        "_blank",
-        "noopener,noreferrer"
-      );
-    } catch (error) {
-      console.error(
-        "Failed to generate calendar event:",
-        error
-      );
-
-      alert(
-        error.response?.data?.message ||
-          "Failed to add interview to calendar"
-      );
-    } finally {
-      setAddingToCalendar(false);
     }
-  };
 
+    // Open the actual Google Calendar URL
+    window.open(
+      calendarUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    setCalendarMessage(
+      "Google Calendar opened successfully."
+    );
+
+    setTimeout(() => {
+      setCalendarMessage("");
+    }, 3500);
+  } catch (error) {
+    console.error(
+      "Failed to generate calendar event:",
+      error
+    );
+
+    setCalendarError(
+      error.response?.data?.message ||
+        error.message ||
+        "Failed to add interview to Google Calendar"
+    );
+  } finally {
+    setAddingToCalendar(false);
+  }
+};
   // ==========================================
   // Status Configuration
   // ==========================================
@@ -1031,7 +1058,7 @@ function ApplicationDetails() {
                   Interview Highlight
               ========================================== */}
 
-              {true && (
+              {application.interviewDate && (
                 <section className="mt-8 fade-up">
 
                   <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-50 p-5 sm:p-6">
@@ -1156,7 +1183,19 @@ function ApplicationDetails() {
                             </>
                           )}
                         </button>
+{calendarMessage && (
+  <div className="mt-3 flex items-center gap-2 text-sm font-medium text-emerald-600">
+    <CheckCircle2 size={16} />
+    {calendarMessage}
+  </div>
+)}
 
+{calendarError && (
+  <div className="mt-3 flex items-center gap-2 text-sm font-medium text-red-600">
+    <AlertCircle size={16} />
+    {calendarError}
+  </div>
+)}
                       </div>
 
                     </div>

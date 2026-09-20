@@ -1,11 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Briefcase,
   CheckCircle,
   Clock,
-  XCircle,
   Plus,
   LogOut,
   FileText,
@@ -13,7 +11,6 @@ import {
   Eye,
   Trash2,
   Loader2,
-  Calendar,
   TrendingUp,
   Target,
   Award,
@@ -31,12 +28,15 @@ import {
 
 import API from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import ProductivitySummary from "../components/ProductivitySummary";
+import FollowUpEmailModal from "../components/FollowUpEmailModal";
 
 function Dashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const [applications, setApplications] = useState([]);
+
   const [analytics, setAnalytics] = useState({
     total: 0,
     responseRate: 0,
@@ -47,8 +47,19 @@ function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [completingFollowUpId, setCompletingFollowUpId] = useState(null);
 
+  // ==========================================
+  // Email modal
+  // ==========================================
+
+  const [selectedEmailApplication, setSelectedEmailApplication] =
+    useState(null);
+
+  // ==========================================
   // Resume states
+  // ==========================================
+
   const [resumeUrl, setResumeUrl] = useState("");
   const [resume, setResume] = useState(null);
   const [uploadingResume, setUploadingResume] = useState(false);
@@ -58,6 +69,7 @@ function Dashboard() {
   // ==========================================
   // Fetch Applications
   // ==========================================
+
   const fetchApplications = async () => {
     try {
       setLoading(true);
@@ -81,6 +93,7 @@ function Dashboard() {
   // ==========================================
   // Fetch Analytics
   // ==========================================
+
   const fetchAnalytics = async () => {
     try {
       const response = await API.get("/applications/stats");
@@ -100,6 +113,7 @@ function Dashboard() {
   // ==========================================
   // Fetch Existing Resume
   // ==========================================
+
   const fetchResume = async () => {
     try {
       const response = await API.get("/resume");
@@ -113,6 +127,7 @@ function Dashboard() {
   // ==========================================
   // Initial Load
   // ==========================================
+
   useEffect(() => {
     fetchApplications();
     fetchAnalytics();
@@ -122,14 +137,69 @@ function Dashboard() {
   // ==========================================
   // Logout
   // ==========================================
+
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
   // ==========================================
+  // Email Modal
+  // ==========================================
+
+  const handleOpenEmail = (application) => {
+    setSelectedEmailApplication(application);
+  };
+
+  const handleCloseEmail = () => {
+    setSelectedEmailApplication(null);
+  };
+ 
+  // ==========================================
+// Complete Follow-up
+// ==========================================
+
+const handleCompleteFollowUp = async (applicationId) => {
+  try {
+    setCompletingFollowUpId(applicationId);
+    setError("");
+
+    const response = await API.patch(
+      `/applications/${applicationId}/follow-up`,
+      {
+        followUpCompleted: true,
+      }
+    );
+
+    const updatedApplication =
+      response.data.application;
+
+    setApplications((currentApplications) =>
+      currentApplications.map((application) =>
+        application._id === applicationId
+          ? updatedApplication
+          : application
+      )
+    );
+  } catch (err) {
+    console.error(
+      "Complete follow-up error:",
+      err
+    );
+
+    setError(
+      err.response?.data?.message ||
+        "Failed to mark follow-up as completed"
+    );
+  } finally {
+    setCompletingFollowUpId(null);
+  }
+};
+
+  // ==========================================
   // Resume Upload
   // ==========================================
+
   const handleResumeUpload = async (e) => {
     const file = e.target.files[0];
 
@@ -147,6 +217,7 @@ function Dashboard() {
       setResumeMessage(
         "Only PDF, DOC, and DOCX files are allowed"
       );
+
       e.target.value = "";
       return;
     }
@@ -155,6 +226,7 @@ function Dashboard() {
       setResumeMessage(
         "Resume file must be smaller than 5 MB"
       );
+
       e.target.value = "";
       return;
     }
@@ -192,6 +264,7 @@ function Dashboard() {
   // ==========================================
   // Delete Resume
   // ==========================================
+
   const handleDeleteResume = async () => {
     const confirmed = window.confirm(
       "Are you sure you want to delete your resume?"
@@ -225,6 +298,7 @@ function Dashboard() {
   // ==========================================
   // Statistics
   // ==========================================
+
   const totalApplications = applications.length;
 
   const appliedCount = applications.filter(
@@ -246,6 +320,29 @@ function Dashboard() {
   const selectedCount = applications.filter(
     (app) => app.status === "Selected"
   ).length;
+
+  const followUpApplications = applications.filter(
+  (app) => app.followUpDate
+);
+
+const completedFollowUps = followUpApplications.filter(
+  (app) => app.followUpCompleted
+).length;
+
+const followUpCompletionRate =
+  followUpApplications.length > 0
+    ? Math.round(
+        (completedFollowUps /
+          followUpApplications.length) *
+          100
+      )
+    : 0;
+
+const activeApplications = applications.filter(
+  (app) =>
+    app.status !== "Rejected" &&
+    app.status !== "Selected"
+).length;
 
   const recentApplications = applications.slice(0, 5);
 
@@ -275,6 +372,7 @@ function Dashboard() {
   // ==========================================
   // Application Funnel
   // ==========================================
+
   const funnelData = [
     {
       stage: "Applications",
@@ -282,11 +380,16 @@ function Dashboard() {
     },
     {
       stage: "Interviews",
-      count: interviewCount + offerCount + selectedCount,
+      count:
+        interviewCount +
+        offerCount +
+        selectedCount,
     },
     {
       stage: "Offers",
-      count: offerCount + selectedCount,
+      count:
+        offerCount +
+        selectedCount,
     },
     {
       stage: "Selected",
@@ -295,64 +398,9 @@ function Dashboard() {
   ];
 
   // ==========================================
-  // Follow-up Tracking
-  // ==========================================
-  const today = new Date();
-
-  const todayStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-
-  const tomorrowStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate() + 1
-  );
-
-  const followUpApplications = applications
-    .filter(
-      (app) =>
-        app.followUpDate &&
-        !app.followUpCompleted
-    )
-    .sort(
-      (a, b) =>
-        new Date(a.followUpDate) -
-        new Date(b.followUpDate)
-    );
-
-  const overdueFollowUps = followUpApplications.filter(
-    (app) => new Date(app.followUpDate) < todayStart
-  );
-
-  const todayFollowUps = followUpApplications.filter((app) => {
-    const date = new Date(app.followUpDate);
-
-    return (
-      date >= todayStart &&
-      date < tomorrowStart
-    );
-  });
-
-  const upcomingFollowUps = followUpApplications.filter(
-    (app) => new Date(app.followUpDate) >= tomorrowStart
-  );
-
-  const formatFollowUpDate = (date) => {
-    if (!date) return "Not scheduled";
-
-    return new Date(date).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  // ==========================================
   // Status Style
   // ==========================================
+
   const getStatusStyle = (status) => {
     switch (status) {
       case "Applied":
@@ -378,7 +426,10 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Navbar */}
+      {/* ==========================================
+          Navbar
+      ========================================== */}
+
       <nav className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
 
@@ -397,13 +448,13 @@ function Dashboard() {
             >
               Applications
             </Link>
-            
+
             <Link
-  to="/ai-analyzer"
-  className="text-sm font-medium text-gray-600 transition hover:text-indigo-600"
->
-  AI Career Assistant
-</Link>
+              to="/ai-analyzer"
+              className="text-sm font-medium text-gray-600 transition hover:text-indigo-600"
+            >
+              AI Career Assistant
+            </Link>
 
             <span className="hidden text-sm text-gray-500 sm:block">
               Hi, {user?.name}
@@ -421,10 +472,14 @@ function Dashboard() {
         </div>
       </nav>
 
-      {/* Main */}
+      {/* ==========================================
+          Main
+      ========================================== */}
+
       <main className="page-enter mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 
         {/* Header */}
+
         <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 
           <div>
@@ -448,18 +503,19 @@ function Dashboard() {
         </div>
 
         {/* Error */}
+
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        {/* ==========================================
-            Main Statistics
-        ========================================== */}
+        {/* Main Statistics */}
+
         <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
 
           {/* Total */}
+
           <div className="hover-card rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
 
@@ -484,6 +540,7 @@ function Dashboard() {
           </div>
 
           {/* Applied */}
+
           <div className="hover-card rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
 
@@ -508,6 +565,7 @@ function Dashboard() {
           </div>
 
           {/* Interviews */}
+
           <div className="hover-card rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
 
@@ -532,6 +590,7 @@ function Dashboard() {
           </div>
 
           {/* Selected */}
+
           <div className="hover-card rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
 
@@ -558,8 +617,25 @@ function Dashboard() {
         </div>
 
         {/* ==========================================
+            Productivity
+        ========================================== */}
+
+       <ProductivitySummary
+  applications={applications}
+  onOpenApplication={(applicationId) =>
+    navigate(`/applications/${applicationId}`)
+  }
+  onOpenEmail={handleOpenEmail}
+  onCompleteFollowUp={handleCompleteFollowUp}
+  onViewApplications={() =>
+    navigate("/applications")
+  }
+/>
+
+        {/* ==========================================
             Analytics
         ========================================== */}
+
         <div className="mb-8">
 
           <div className="mb-4">
@@ -572,9 +648,10 @@ function Dashboard() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
 
             {/* Response Rate */}
+
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
 
@@ -601,6 +678,7 @@ function Dashboard() {
             </div>
 
             {/* Interview Rate */}
+
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
 
@@ -627,6 +705,7 @@ function Dashboard() {
             </div>
 
             {/* Offer Rate */}
+
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
 
@@ -653,6 +732,7 @@ function Dashboard() {
             </div>
 
             {/* Selection Rate */}
+
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between">
 
@@ -678,15 +758,68 @@ function Dashboard() {
               </div>
             </div>
 
+            {/* Active Pipeline */}
+
+<div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="text-sm font-medium text-gray-500">
+        Active Pipeline
+      </p>
+
+      <p className="mt-2 text-3xl font-bold text-gray-900">
+        {activeApplications}
+      </p>
+
+      <p className="mt-1 text-xs text-gray-500">
+        Applications still in progress
+      </p>
+    </div>
+
+    <Briefcase
+      size={25}
+      className="text-indigo-600"
+    />
+  </div>
+</div>
+
+{/* Follow-up Completion */}
+
+<div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="text-sm font-medium text-gray-500">
+        Follow-up Completion
+      </p>
+
+      <p className="mt-2 text-3xl font-bold text-gray-900">
+        {followUpCompletionRate}%
+      </p>
+
+      <p className="mt-1 text-xs text-gray-500">
+        Follow-ups completed
+      </p>
+    </div>
+
+    <CheckCircle
+      size={25}
+      className="text-green-600"
+    />
+  </div>
+</div>
+
           </div>
         </div>
+
 
         {/* ==========================================
             Resume + Status Chart
         ========================================== */}
+
         <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
           {/* Resume */}
+
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
 
             <div className="mb-5 flex items-center gap-3">
@@ -732,6 +865,7 @@ function Dashboard() {
                       </p>
 
                     </div>
+
                   </div>
                 </div>
 
@@ -764,7 +898,6 @@ function Dashboard() {
                     ) : (
                       <Trash2 size={16} />
                     )}
-
                     Delete
                   </button>
 
@@ -850,6 +983,7 @@ function Dashboard() {
           </div>
 
           {/* Status Chart */}
+
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
 
             <div className="mb-5">
@@ -904,11 +1038,13 @@ function Dashboard() {
 
             </div>
           </div>
+
         </div>
 
         {/* ==========================================
             Application Funnel
         ========================================== */}
+
         <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
 
           <div className="mb-6">
@@ -970,240 +1106,14 @@ function Dashboard() {
         </div>
 
         {/* ==========================================
-            Follow-up Tracking
-        ========================================== */}
-        <div className="mb-8 rounded-xl border border-gray-200 bg-white shadow-sm">
-
-          <div className="border-b border-gray-100 px-6 py-5">
-
-            <div className="flex items-center gap-3">
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50">
-                <Calendar
-                  size={20}
-                  className="text-indigo-600"
-                />
-              </div>
-
-              <div>
-
-                <h2 className="font-semibold text-gray-900">
-                  Follow-up Tracking
-                </h2>
-
-                <p className="mt-1 text-sm text-gray-500">
-                  Keep track of applications you need to follow up on.
-                </p>
-
-              </div>
-            </div>
-          </div>
-
-          {followUpApplications.length === 0 ? (
-            <div className="p-8 text-center">
-
-              <Calendar
-                size={30}
-                className="mx-auto text-gray-400"
-              />
-
-              <p className="mt-3 font-medium text-gray-700">
-                No follow-ups scheduled
-              </p>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Add a follow-up date when creating an application.
-              </p>
-
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-5 p-6 lg:grid-cols-3">
-
-              {/* Overdue */}
-              <div className="rounded-xl border border-red-200 bg-red-50/50">
-
-                <div className="border-b border-red-100 px-4 py-3">
-
-                  <div className="flex items-center justify-between">
-
-                    <h3 className="font-semibold text-red-700">
-                      Overdue
-                    </h3>
-
-                    <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700">
-                      {overdueFollowUps.length}
-                    </span>
-
-                  </div>
-                </div>
-
-                <div className="divide-y divide-red-100">
-
-                  {overdueFollowUps.length === 0 ? (
-                    <p className="p-4 text-sm text-gray-500">
-                      No overdue follow-ups.
-                    </p>
-                  ) : (
-                    overdueFollowUps.slice(0, 5).map((application) => (
-                      <button
-                        key={application._id}
-                        onClick={() =>
-                          navigate(
-                            `/applications/${application._id}`
-                          )
-                        }
-                        className="w-full p-4 text-left transition hover:bg-red-50"
-                      >
-
-                        <p className="font-medium text-gray-900">
-                          {application.position}
-                        </p>
-
-                        <p className="mt-1 text-sm text-indigo-600">
-                          {application.company}
-                        </p>
-
-                        <p className="mt-2 text-xs text-red-600">
-                          Follow-up:{" "}
-                          {formatFollowUpDate(
-                            application.followUpDate
-                          )}
-                        </p>
-
-                      </button>
-                    ))
-                  )}
-
-                </div>
-              </div>
-
-              {/* Today */}
-              <div className="rounded-xl border border-yellow-200 bg-yellow-50/50">
-
-                <div className="border-b border-yellow-100 px-4 py-3">
-
-                  <div className="flex items-center justify-between">
-
-                    <h3 className="font-semibold text-yellow-700">
-                      Due Today
-                    </h3>
-
-                    <span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-700">
-                      {todayFollowUps.length}
-                    </span>
-
-                  </div>
-                </div>
-
-                <div className="divide-y divide-yellow-100">
-
-                  {todayFollowUps.length === 0 ? (
-                    <p className="p-4 text-sm text-gray-500">
-                      No follow-ups due today.
-                    </p>
-                  ) : (
-                    todayFollowUps.slice(0, 5).map((application) => (
-                      <button
-                        key={application._id}
-                        onClick={() =>
-                          navigate(
-                            `/applications/${application._id}`
-                          )
-                        }
-                        className="w-full p-4 text-left transition hover:bg-yellow-50"
-                      >
-
-                        <p className="font-medium text-gray-900">
-                          {application.position}
-                        </p>
-
-                        <p className="mt-1 text-sm text-indigo-600">
-                          {application.company}
-                        </p>
-
-                        <p className="mt-2 text-xs text-yellow-700">
-                          Follow-up: Today
-                        </p>
-
-                      </button>
-                    ))
-                  )}
-
-                </div>
-              </div>
-
-              {/* Upcoming */}
-              <div className="rounded-xl border border-blue-200 bg-blue-50/50">
-
-                <div className="border-b border-blue-100 px-4 py-3">
-
-                  <div className="flex items-center justify-between">
-
-                    <h3 className="font-semibold text-blue-700">
-                      Upcoming
-                    </h3>
-
-                    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
-                      {upcomingFollowUps.length}
-                    </span>
-
-                  </div>
-                </div>
-
-                <div className="divide-y divide-blue-100">
-
-                  {upcomingFollowUps.length === 0 ? (
-                    <p className="p-4 text-sm text-gray-500">
-                      No upcoming follow-ups.
-                    </p>
-                  ) : (
-                    upcomingFollowUps.slice(0, 5).map((application) => (
-                      <button
-                        key={application._id}
-                        onClick={() =>
-                          navigate(
-                            `/applications/${application._id}`
-                          )
-                        }
-                        className="w-full p-4 text-left transition hover:bg-blue-50"
-                      >
-
-                        <p className="font-medium text-gray-900">
-                          {application.position}
-                        </p>
-
-                        <p className="mt-1 text-sm text-indigo-600">
-                          {application.company}
-                        </p>
-
-                        <p className="mt-2 text-xs text-blue-700">
-                          Follow-up:{" "}
-                          {formatFollowUpDate(
-                            application.followUpDate
-                          )}
-                        </p>
-
-                      </button>
-                    ))
-                  )}
-
-                </div>
-              </div>
-
-            </div>
-          )}
-
-        </div>
-
-        {/* ==========================================
             Recent Applications
         ========================================== */}
+
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
 
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
 
             <div>
-
               <h2 className="font-semibold text-gray-900">
                 Recent Applications
               </h2>
@@ -1211,7 +1121,6 @@ function Dashboard() {
               <p className="mt-1 text-sm text-gray-500">
                 Your latest job applications
               </p>
-
             </div>
 
             <Link
@@ -1256,9 +1165,15 @@ function Dashboard() {
             <div className="divide-y divide-gray-100">
 
               {recentApplications.map((application) => (
-                <div
+                <button
                   key={application._id}
-                  className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between"
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      `/applications/${application._id}`
+                    )
+                  }
+                  className="flex w-full flex-col gap-3 px-6 py-5 text-left transition hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
                 >
 
                   <div>
@@ -1287,7 +1202,7 @@ function Dashboard() {
                     {application.status}
                   </span>
 
-                </div>
+                </button>
               ))}
 
             </div>
@@ -1296,9 +1211,23 @@ function Dashboard() {
         </div>
 
       </main>
+
+      {/* ==========================================
+          Follow-up Email Modal
+      ========================================== */}
+
+      {selectedEmailApplication && (
+        <FollowUpEmailModal
+          application={{
+            ...selectedEmailApplication,
+            userName: user?.name || "",
+          }}
+          onClose={handleCloseEmail}
+        />
+      )}
+
     </div>
   );
 }
 
 export default Dashboard;
-
