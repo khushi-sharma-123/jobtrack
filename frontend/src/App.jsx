@@ -13,6 +13,7 @@ import Applications from "./pages/Applications";
 import AddApplication from "./pages/AddApplication";
 import EditApplication from "./pages/EditApplication";
 import ApplicationDetails from "./pages/ApplicationDetails";
+import AIAnalyzer from "./pages/AIAnalyzer";
 
 function App() {
   return (
@@ -78,6 +79,15 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+  path="/ai-analyzer"
+  element={
+    <ProtectedRoute>
+      <AIAnalyzer />
+    </ProtectedRoute>
+  }
+/>
 
       </Routes>
     </BrowserRouter>

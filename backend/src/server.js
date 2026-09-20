@@ -14,6 +14,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const applicationRoutes = require("./routes/applicationRoutes");
 const resumeRoutes = require("./routes/resumeRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 const app = express();
 app.use(helmet());
@@ -51,6 +52,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/resume", resumeRoutes);
+app.use("/api/ai", aiRoutes);
 
 connectDB();
 
@@ -62,9 +64,11 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-console.log("EMAIL_USER loaded:", process.env.EMAIL_USER);
-console.log("EMAIL_PASS loaded:", !!process.env.EMAIL_PASS);
-console.log("EMAIL_PASS length:", process.env.EMAIL_PASS?.length);
+if (!process.env.OPENAI_API_KEY) {
+  console.warn(
+    "Warning: OPENAI_API_KEY is not configured. AI features will not work."
+  );
+}
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

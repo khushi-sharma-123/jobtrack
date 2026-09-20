@@ -397,6 +397,13 @@ function Dashboard() {
             >
               Applications
             </Link>
+            
+            <Link
+  to="/ai-analyzer"
+  className="text-sm font-medium text-gray-600 transition hover:text-indigo-600"
+>
+  AI Career Assistant
+</Link>
 
             <span className="hidden text-sm text-gray-500 sm:block">
               Hi, {user?.name}

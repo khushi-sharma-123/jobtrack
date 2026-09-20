@@ -20,17 +20,24 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    resumeUrl: {
-  type: String,
-  default: "",
-},
-resumeFileId: {
-   type: String,
-    default: "", 
-},
 
- },
-  
+    resumeUrl: {
+      type: String,
+      default: "",
+    },
+
+    resumeFileId: {
+      type: String,
+      default: "",
+    },
+
+    // Extracted resume text for AI features
+    resumeText: {
+      type: String,
+      default: "",
+    },
+  },
+
   {
     timestamps: true,
   }
