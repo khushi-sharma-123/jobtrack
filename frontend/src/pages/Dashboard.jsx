@@ -1,19 +1,32 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Briefcase,
-  CheckCircle,
-  Clock,
-  Plus,
-  LogOut,
-  FileText,
-  Upload,
-  Eye,
-  Trash2,
-  Loader2,
-  TrendingUp,
-  Target,
+  Activity,
+  ArrowRight,
   Award,
+  BarChart3,
+  BellRing,
+  BrainCircuit,
+  Briefcase,
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  Eye,
+  FileText,
+  Loader2,
+  LogOut,
+  Mail,
+  Menu,
+  Plus,
+  Sparkles,
+  Target,
+  Trash2,
+  TrendingUp,
+  Upload,
+  UserCircle,
+  X,
 } from "lucide-react";
 
 import {
@@ -47,18 +60,11 @@ function Dashboard() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [completingFollowUpId, setCompletingFollowUpId] = useState(null);
-
-  // ==========================================
-  // Email modal
-  // ==========================================
+  const [completingFollowUpId, setCompletingFollowUpId] =
+    useState(null);
 
   const [selectedEmailApplication, setSelectedEmailApplication] =
     useState(null);
-
-  // ==========================================
-  // Resume states
-  // ==========================================
 
   const [resumeUrl, setResumeUrl] = useState("");
   const [resume, setResume] = useState(null);
@@ -66,9 +72,11 @@ function Dashboard() {
   const [deletingResume, setDeletingResume] = useState(false);
   const [resumeMessage, setResumeMessage] = useState("");
 
-  // ==========================================
-  // Fetch Applications
-  // ==========================================
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // =========================================================
+  // Fetch applications
+  // =========================================================
 
   const fetchApplications = async () => {
     try {
@@ -90,9 +98,9 @@ function Dashboard() {
     }
   };
 
-  // ==========================================
-  // Fetch Analytics
-  // ==========================================
+  // =========================================================
+  // Fetch analytics
+  // =========================================================
 
   const fetchAnalytics = async () => {
     try {
@@ -110,9 +118,9 @@ function Dashboard() {
     }
   };
 
-  // ==========================================
-  // Fetch Existing Resume
-  // ==========================================
+  // =========================================================
+  // Fetch resume
+  // =========================================================
 
   const fetchResume = async () => {
     try {
@@ -124,9 +132,9 @@ function Dashboard() {
     }
   };
 
-  // ==========================================
-  // Initial Load
-  // ==========================================
+  // =========================================================
+  // Initial load
+  // =========================================================
 
   useEffect(() => {
     fetchApplications();
@@ -134,18 +142,18 @@ function Dashboard() {
     fetchResume();
   }, []);
 
-  // ==========================================
+  // =========================================================
   // Logout
-  // ==========================================
+  // =========================================================
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  // ==========================================
-  // Email Modal
-  // ==========================================
+  // =========================================================
+  // Email modal
+  // =========================================================
 
   const handleOpenEmail = (application) => {
     setSelectedEmailApplication(application);
@@ -154,51 +162,47 @@ function Dashboard() {
   const handleCloseEmail = () => {
     setSelectedEmailApplication(null);
   };
- 
-  // ==========================================
-// Complete Follow-up
-// ==========================================
 
-const handleCompleteFollowUp = async (applicationId) => {
-  try {
-    setCompletingFollowUpId(applicationId);
-    setError("");
+  // =========================================================
+  // Complete follow-up
+  // =========================================================
 
-    const response = await API.patch(
-      `/applications/${applicationId}/follow-up`,
-      {
-        followUpCompleted: true,
-      }
-    );
+  const handleCompleteFollowUp = async (applicationId) => {
+    try {
+      setCompletingFollowUpId(applicationId);
+      setError("");
 
-    const updatedApplication =
-      response.data.application;
+      const response = await API.patch(
+        `/applications/${applicationId}/follow-up`,
+        {
+          followUpCompleted: true,
+        }
+      );
 
-    setApplications((currentApplications) =>
-      currentApplications.map((application) =>
-        application._id === applicationId
-          ? updatedApplication
-          : application
-      )
-    );
-  } catch (err) {
-    console.error(
-      "Complete follow-up error:",
-      err
-    );
+      const updatedApplication = response.data.application;
 
-    setError(
-      err.response?.data?.message ||
-        "Failed to mark follow-up as completed"
-    );
-  } finally {
-    setCompletingFollowUpId(null);
-  }
-};
+      setApplications((currentApplications) =>
+        currentApplications.map((application) =>
+          application._id === applicationId
+            ? updatedApplication
+            : application
+        )
+      );
+    } catch (err) {
+      console.error("Complete follow-up error:", err);
 
-  // ==========================================
-  // Resume Upload
-  // ==========================================
+      setError(
+        err.response?.data?.message ||
+          "Failed to mark follow-up as completed"
+      );
+    } finally {
+      setCompletingFollowUpId(null);
+    }
+  };
+
+  // =========================================================
+  // Resume upload
+  // =========================================================
 
   const handleResumeUpload = async (e) => {
     const file = e.target.files[0];
@@ -261,9 +265,9 @@ const handleCompleteFollowUp = async (applicationId) => {
     }
   };
 
-  // ==========================================
-  // Delete Resume
-  // ==========================================
+  // =========================================================
+  // Delete resume
+  // =========================================================
 
   const handleDeleteResume = async () => {
     const confirmed = window.confirm(
@@ -295,9 +299,9 @@ const handleCompleteFollowUp = async (applicationId) => {
     }
   };
 
-  // ==========================================
+  // =========================================================
   // Statistics
-  // ==========================================
+  // =========================================================
 
   const totalApplications = applications.length;
 
@@ -321,28 +325,28 @@ const handleCompleteFollowUp = async (applicationId) => {
     (app) => app.status === "Selected"
   ).length;
 
+  const activeApplications = applications.filter(
+    (app) =>
+      app.status !== "Rejected" &&
+      app.status !== "Selected"
+  ).length;
+
   const followUpApplications = applications.filter(
-  (app) => app.followUpDate
-);
+    (app) => app.followUpDate
+  );
 
-const completedFollowUps = followUpApplications.filter(
-  (app) => app.followUpCompleted
-).length;
+  const completedFollowUps = followUpApplications.filter(
+    (app) => app.followUpCompleted
+  ).length;
 
-const followUpCompletionRate =
-  followUpApplications.length > 0
-    ? Math.round(
-        (completedFollowUps /
-          followUpApplications.length) *
-          100
-      )
-    : 0;
-
-const activeApplications = applications.filter(
-  (app) =>
-    app.status !== "Rejected" &&
-    app.status !== "Selected"
-).length;
+  const followUpCompletionRate =
+    followUpApplications.length > 0
+      ? Math.round(
+          (completedFollowUps /
+            followUpApplications.length) *
+            100
+        )
+      : 0;
 
   const recentApplications = applications.slice(0, 5);
 
@@ -369,10 +373,6 @@ const activeApplications = applications.filter(
     },
   ];
 
-  // ==========================================
-  // Application Funnel
-  // ==========================================
-
   const funnelData = [
     {
       stage: "Applications",
@@ -397,835 +397,1392 @@ const activeApplications = applications.filter(
     },
   ];
 
-  // ==========================================
-  // Status Style
-  // ==========================================
+  // =========================================================
+  // Status styles
+  // =========================================================
 
   const getStatusStyle = (status) => {
     switch (status) {
       case "Applied":
-        return "bg-blue-50 text-blue-700 border-blue-200";
+        return {
+          pill: "bg-blue-50 text-blue-700 border-blue-200",
+          dot: "bg-blue-500",
+        };
 
       case "Interview":
-        return "bg-yellow-50 text-yellow-700 border-yellow-200";
+        return {
+          pill: "bg-amber-50 text-amber-700 border-amber-200",
+          dot: "bg-amber-500",
+        };
 
       case "Offer":
-        return "bg-purple-50 text-purple-700 border-purple-200";
+        return {
+          pill: "bg-purple-50 text-purple-700 border-purple-200",
+          dot: "bg-purple-500",
+        };
 
       case "Selected":
-        return "bg-green-50 text-green-700 border-green-200";
+        return {
+          pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
+          dot: "bg-emerald-500",
+        };
 
       case "Rejected":
-        return "bg-red-50 text-red-700 border-red-200";
+        return {
+          pill: "bg-red-50 text-red-700 border-red-200",
+          dot: "bg-red-500",
+        };
 
       default:
-        return "bg-gray-50 text-gray-700 border-gray-200";
+        return {
+          pill: "bg-gray-50 text-gray-700 border-gray-200",
+          dot: "bg-gray-400",
+        };
     }
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+
+    if (hour < 12) {
+      return "Good morning";
+    }
+
+    if (hour < 18) {
+      return "Good afternoon";
+    }
+
+    return "Good evening";
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#101423]">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-      {/* ==========================================
-          Navbar
-      ========================================== */}
+        .jobtrack-dashboard {
+          font-family: "Inter", sans-serif;
+        }
 
-      <nav className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        @keyframes dashboardEnter {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
 
-          <Link
-            to="/dashboard"
-            className="text-2xl font-bold text-indigo-600"
-          >
-            JobTrack
-          </Link>
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
 
-          <div className="flex items-center gap-4">
+        @keyframes floatSoft {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
 
-            <Link
-              to="/applications"
-              className="text-sm font-medium text-gray-600 transition hover:text-indigo-600"
-            >
-              Applications
-            </Link>
+          50% {
+            transform: translateY(-5px);
+          }
+        }
 
-            <Link
-              to="/ai-analyzer"
-              className="text-sm font-medium text-gray-600 transition hover:text-indigo-600"
-            >
-              AI Career Assistant
-            </Link>
+        @keyframes glowPulse {
+          0%,
+          100% {
+            opacity: 0.3;
+          }
 
-            <span className="hidden text-sm text-gray-500 sm:block">
-              Hi, {user?.name}
-            </span>
+          50% {
+            opacity: 0.52;
+          }
+        }
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-            >
-              <LogOut size={16} />
-              Logout
-            </button>
+        .dashboard-enter {
+          animation: dashboardEnter 0.45s ease-out;
+        }
 
-          </div>
-        </div>
-      </nav>
+        .soft-float {
+          animation: floatSoft 5s ease-in-out infinite;
+        }
 
-      {/* ==========================================
-          Main
-      ========================================== */}
+        .glow-pulse {
+          animation: glowPulse 7s ease-in-out infinite;
+        }
 
-      <main className="page-enter mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        .dashboard-card {
+          transition:
+            transform 220ms ease,
+            box-shadow 220ms ease,
+            border-color 220ms ease;
+        }
 
-        {/* Header */}
+        .dashboard-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 18px 45px rgba(15, 20, 40, 0.07);
+        }
 
-        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
 
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Dashboard
-            </h1>
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
 
-            <p className="mt-1 text-gray-500">
-              Track your job applications and manage your job search.
-            </p>
-          </div>
-
-          <Link
-            to="/applications/add"
-            className="flex w-fit items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 font-medium text-white shadow-sm transition hover:bg-indigo-700"
-          >
-            <Plus size={18} />
-            Add Application
-          </Link>
-
-        </div>
-
-        {/* Error */}
-
-        {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        {/* Main Statistics */}
-
-        <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-
-          {/* Total */}
-
-          <div className="hover-card rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="jobtrack-dashboard">
+        {/* =====================================================
+            NAVBAR
+        ====================================================== */}
+        <header className="sticky top-0 z-50 border-b border-black/5 bg-[#f5f5f7]/90 backdrop-blur-xl">
+          <nav className="mx-auto max-w-[1500px] px-4 py-3 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between">
-
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Total Applications
-                </p>
-
-                <p className="mt-2 text-3xl font-bold text-gray-900">
-                  {totalApplications}
-                </p>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-indigo-50">
-                <Briefcase
-                  size={22}
-                  className="text-indigo-600"
-                />
-              </div>
-
-            </div>
-          </div>
-
-          {/* Applied */}
-
-          <div className="hover-card rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Applied
-                </p>
-
-                <p className="mt-2 text-3xl font-bold text-gray-900">
-                  {appliedCount}
-                </p>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50">
-                <Clock
-                  size={22}
-                  className="text-blue-600"
-                />
-              </div>
-
-            </div>
-          </div>
-
-          {/* Interviews */}
-
-          <div className="hover-card rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Interviews
-                </p>
-
-                <p className="mt-2 text-3xl font-bold text-gray-900">
-                  {interviewCount}
-                </p>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-yellow-50">
-                <Clock
-                  size={22}
-                  className="text-yellow-600"
-                />
-              </div>
-
-            </div>
-          </div>
-
-          {/* Selected */}
-
-          <div className="hover-card rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-
-              <div>
-                <p className="text-sm font-medium text-gray-500">
-                  Selected
-                </p>
-
-                <p className="mt-2 text-3xl font-bold text-gray-900">
-                  {selectedCount}
-                </p>
-              </div>
-
-              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-green-50">
-                <CheckCircle
-                  size={22}
-                  className="text-green-600"
-                />
-              </div>
-
-            </div>
-          </div>
-
-        </div>
-
-        {/* ==========================================
-            Productivity
-        ========================================== */}
-
-       <ProductivitySummary
-  applications={applications}
-  onOpenApplication={(applicationId) =>
-    navigate(`/applications/${applicationId}`)
-  }
-  onOpenEmail={handleOpenEmail}
-  onCompleteFollowUp={handleCompleteFollowUp}
-  onViewApplications={() =>
-    navigate("/applications")
-  }
-/>
-
-        {/* ==========================================
-            Analytics
-        ========================================== */}
-
-        <div className="mb-8">
-
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Application Analytics
-            </h2>
-
-            <p className="mt-1 text-sm text-gray-500">
-              Understand how your applications are progressing.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-
-            {/* Response Rate */}
-
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-
-                <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Response Rate
-                  </p>
-
-                  <p className="mt-2 text-3xl font-bold text-gray-900">
-                    {analytics.responseRate}%
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    Applications receiving a response
-                  </p>
+              {/* Brand */}
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2.5"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0a1026] text-white">
+                  <span className="text-sm font-semibold">J</span>
                 </div>
 
-                <TrendingUp
-                  size={25}
-                  className="text-indigo-600"
-                />
-
-              </div>
-            </div>
-
-            {/* Interview Rate */}
-
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-
                 <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Interview Rate
+                  <p className="text-lg font-semibold tracking-[-0.04em]">
+                    JobTrack
                   </p>
 
-                  <p className="mt-2 text-3xl font-bold text-gray-900">
-                    {analytics.interviewRate}%
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    Applications reaching interview
+                  <p className="hidden text-[9px] font-medium uppercase tracking-[0.16em] text-black/30 sm:block">
+                    Career workspace
                   </p>
                 </div>
+              </Link>
 
-                <Target
-                  size={25}
-                  className="text-yellow-600"
-                />
+              {/* Desktop nav */}
+              <div className="hidden items-center gap-1 rounded-full border border-black/5 bg-white p-1 shadow-sm lg:flex">
+                <Link
+                  to="/dashboard"
+                  className="rounded-full bg-[#0a1026] px-4 py-2 text-xs font-semibold text-white"
+                >
+                  Dashboard
+                </Link>
 
-              </div>
-            </div>
+                <Link
+                  to="/applications"
+                  className="rounded-full px-4 py-2 text-xs font-medium text-black/55 transition hover:bg-black/5"
+                >
+                  Applications
+                </Link>
 
-            {/* Offer Rate */}
-
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-
-                <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Offer Rate
-                  </p>
-
-                  <p className="mt-2 text-3xl font-bold text-gray-900">
-                    {analytics.offerRate}%
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    Applications reaching offer
-                  </p>
-                </div>
-
-                <Award
-                  size={25}
-                  className="text-purple-600"
-                />
-
-              </div>
-            </div>
-
-            {/* Selection Rate */}
-
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-
-                <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    Selection Rate
-                  </p>
-
-                  <p className="mt-2 text-3xl font-bold text-gray-900">
-                    {analytics.selectionRate}%
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    Applications resulting in selection
-                  </p>
-                </div>
-
-                <CheckCircle
-                  size={25}
-                  className="text-green-600"
-                />
-
-              </div>
-            </div>
-
-            {/* Active Pipeline */}
-
-<div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-  <div className="flex items-center justify-between">
-    <div>
-      <p className="text-sm font-medium text-gray-500">
-        Active Pipeline
-      </p>
-
-      <p className="mt-2 text-3xl font-bold text-gray-900">
-        {activeApplications}
-      </p>
-
-      <p className="mt-1 text-xs text-gray-500">
-        Applications still in progress
-      </p>
-    </div>
-
-    <Briefcase
-      size={25}
-      className="text-indigo-600"
-    />
-  </div>
-</div>
-
-{/* Follow-up Completion */}
-
-<div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-  <div className="flex items-center justify-between">
-    <div>
-      <p className="text-sm font-medium text-gray-500">
-        Follow-up Completion
-      </p>
-
-      <p className="mt-2 text-3xl font-bold text-gray-900">
-        {followUpCompletionRate}%
-      </p>
-
-      <p className="mt-1 text-xs text-gray-500">
-        Follow-ups completed
-      </p>
-    </div>
-
-    <CheckCircle
-      size={25}
-      className="text-green-600"
-    />
-  </div>
-</div>
-
-          </div>
-        </div>
-
-
-        {/* ==========================================
-            Resume + Status Chart
-        ========================================== */}
-
-        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-
-          {/* Resume */}
-
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-
-            <div className="mb-5 flex items-center gap-3">
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50">
-                <FileText
-                  size={21}
-                  className="text-indigo-600"
-                />
+                <Link
+                  to="/ai-analyzer"
+                  className="rounded-full px-4 py-2 text-xs font-medium text-black/55 transition hover:bg-black/5"
+                >
+                  AI Assistant
+                </Link>
               </div>
 
-              <div>
-                <h2 className="font-semibold text-gray-900">
-                  My Resume
-                </h2>
+              {/* Right controls */}
+              <div className="flex items-center gap-2">
+                <div className="hidden items-center gap-2 rounded-full border border-black/5 bg-white px-3 py-2 sm:flex">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e9e6ff] text-[#655db2]">
+                    <UserCircle size={17} />
+                  </div>
 
-                <p className="text-xs text-gray-500">
-                  Manage your latest resume
-                </p>
-              </div>
+                  <div className="max-w-[130px]">
+                    <p className="truncate text-xs font-semibold">
+                      {user?.name || "User"}
+                    </p>
 
-            </div>
-
-            {resumeUrl ? (
-              <>
-                <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-
-                  <div className="flex items-center gap-3">
-
-                    <CheckCircle
-                      size={20}
-                      className="shrink-0 text-green-600"
-                    />
-
-                    <div className="min-w-0">
-
-                      <p className="text-sm font-medium text-green-800">
-                        Resume uploaded
-                      </p>
-
-                      <p className="mt-0.5 truncate text-xs text-green-700">
-                        {resume?.name || "Your saved resume"}
-                      </p>
-
-                    </div>
-
+                    <p className="truncate text-[9px] text-black/35">
+                      {user?.email || "Account"}
+                    </p>
                   </div>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="hidden items-center gap-2 rounded-full border border-black/10 bg-white px-3.5 py-2 text-xs font-medium text-black/60 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 sm:flex"
+                >
+                  <LogOut size={14} />
+                  Logout
+                </button>
 
-                  <button
-                    onClick={() =>
-                      window.open(
-                        resumeUrl,
-                        "_blank",
-                        "noopener,noreferrer"
-                      )
-                    }
-                    className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                  >
-                    <Eye size={16} />
-                    View
-                  </button>
-
-                  <button
-                    onClick={handleDeleteResume}
-                    disabled={deletingResume}
-                    className="flex items-center justify-center gap-2 rounded-lg border border-red-200 px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {deletingResume ? (
-                      <Loader2
-                        size={16}
-                        className="animate-spin"
-                      />
-                    ) : (
-                      <Trash2 size={16} />
-                    )}
-                    Delete
-                  </button>
-
-                </div>
-
-                <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2.5 text-sm font-medium text-indigo-700 transition hover:bg-indigo-100">
-
-                  <Upload size={16} />
-                  Replace Resume
-
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleResumeUpload}
-                    className="hidden"
-                    disabled={uploadingResume}
-                  />
-
-                </label>
-              </>
-            ) : (
-              <>
-                <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-5 text-center">
-
-                  <FileText
-                    size={30}
-                    className="mx-auto text-gray-400"
-                  />
-
-                  <p className="mt-2 text-sm font-medium text-gray-700">
-                    No resume uploaded
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    PDF, DOC or DOCX · Max 5 MB
-                  </p>
-
-                </div>
-
-                <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700">
-
-                  {uploadingResume ? (
-                    <>
-                      <Loader2
-                        size={17}
-                        className="animate-spin"
-                      />
-                      Uploading...
-                    </>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMobileMenuOpen((prev) => !prev)
+                  }
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white lg:hidden"
+                >
+                  {mobileMenuOpen ? (
+                    <X size={18} />
                   ) : (
-                    <>
-                      <Upload size={17} />
-                      Upload Resume
-                    </>
+                    <Menu size={18} />
                   )}
-
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={handleResumeUpload}
-                    className="hidden"
-                    disabled={uploadingResume}
-                  />
-
-                </label>
-              </>
-            )}
-
-            {resumeMessage && (
-              <p
-                className={`mt-3 text-center text-sm ${
-                  resumeMessage
-                    .toLowerCase()
-                    .includes("success")
-                    ? "text-green-600"
-                    : "text-red-600"
-                }`}
-              >
-                {resumeMessage}
-              </p>
-            )}
-
-          </div>
-
-          {/* Status Chart */}
-
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
-
-            <div className="mb-5">
-              <h2 className="font-semibold text-gray-900">
-                Application Overview
-              </h2>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Applications by current status
-              </p>
+                </button>
+              </div>
             </div>
 
-            <div className="h-72 w-full">
+            {/* Mobile menu */}
+            {mobileMenuOpen && (
+              <div className="mt-3 rounded-2xl border border-black/10 bg-white p-3 lg:hidden">
+                <div className="grid gap-1">
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-xl bg-[#0a1026] px-4 py-3 text-sm font-semibold text-white"
+                  >
+                    Dashboard
+                  </Link>
 
-              {loading ? (
-                <div className="flex h-full items-center justify-center text-sm text-gray-500">
-                  Loading chart...
+                  <Link
+                    to="/applications"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-xl px-4 py-3 text-sm font-medium hover:bg-black/5"
+                  >
+                    Applications
+                  </Link>
+
+                  <Link
+                    to="/ai-analyzer"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-xl px-4 py-3 text-sm font-medium hover:bg-black/5"
+                  >
+                    AI Career Assistant
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 rounded-xl px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
                 </div>
+              </div>
+            )}
+          </nav>
+        </header>
+
+        {/* =====================================================
+            MAIN
+        ====================================================== */}
+        <main className="dashboard-enter mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+
+          {/* ===================================================
+              HERO HEADER
+          ==================================================== */}
+          <section className="relative mb-7 overflow-hidden rounded-[2.3rem] bg-[#0a1026] text-white shadow-[0_25px_80px_rgba(10,16,38,0.16)]">
+            {/* Purple glow */}
+            <div
+              className="glow-pulse pointer-events-none absolute -right-28 -top-40 h-[520px] w-[520px] rounded-full blur-[110px]"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(113,105,205,0.6) 0%, rgba(76,70,147,0.25) 42%, transparent 72%)",
+              }}
+            />
+
+            {/* Pink glow */}
+            <div
+              className="glow-pulse pointer-events-none absolute -bottom-44 -left-32 h-[430px] w-[430px] rounded-full blur-[110px]"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(153,57,99,0.34) 0%, rgba(88,34,65,0.15) 42%, transparent 72%)",
+              }}
+            />
+
+            <div className="relative z-10 grid gap-10 p-7 sm:p-9 lg:grid-cols-[1fr_auto] lg:items-center lg:p-12">
+
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-[10px] font-semibold uppercase tracking-[0.17em] text-white/55 backdrop-blur">
+                  <Sparkles size={12} />
+                  Career command center
+                </div>
+
+                <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-[0.98] tracking-[-0.06em] sm:text-5xl lg:text-6xl">
+                  {getGreeting()},{" "}
+                  <span className="text-[#aaa3ff]">
+                    {user?.name?.split(" ")[0] || "there"}.
+                  </span>
+                </h1>
+
+                <p className="mt-5 max-w-2xl text-sm leading-6 text-white/50 sm:text-base">
+                  Here's what is happening across your job search.
+                  Keep your next action visible and your momentum moving.
+                </p>
+
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <Link
+                    to="/applications/add"
+                    className="group flex items-center gap-3 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#0a1026] transition hover:-translate-y-0.5"
+                  >
+                    <Plus size={16} />
+
+                    Add application
+
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0a1026] text-white transition group-hover:translate-x-1">
+                      <ArrowRight size={12} />
+                    </span>
+                  </Link>
+
+                  <Link
+                    to="/ai-analyzer"
+                    className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-white/80 transition hover:bg-white/10"
+                  >
+                    <BrainCircuit size={16} />
+                    Open AI assistant
+                  </Link>
+                </div>
+              </div>
+
+              {/* Hero summary */}
+              <div className="soft-float min-w-0 lg:w-[330px]">
+                <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/35">
+                        Current momentum
+                      </p>
+
+                      <p className="mt-1 text-lg font-semibold">
+                        {activeApplications} active opportunities
+                      </p>
+                    </div>
+
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#aaa3ff]/10 text-[#aaa3ff]">
+                      <TrendingUp size={19} />
+                    </div>
+                  </div>
+
+                  <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-[#aaa3ff]"
+                      style={{
+                        width: `${Math.min(
+                          analytics.responseRate,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-white/35">
+                    <span>Response rate</span>
+                    <span className="font-semibold text-white/65">
+                      {analytics.responseRate}%
+                    </span>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-3 gap-2">
+                    <div className="rounded-2xl bg-white/5 p-3">
+                      <p className="text-[9px] text-white/35">
+                        Interviews
+                      </p>
+                      <p className="mt-1 text-xl font-semibold">
+                        {interviewCount}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-white/5 p-3">
+                      <p className="text-[9px] text-white/35">
+                        Offers
+                      </p>
+                      <p className="mt-1 text-xl font-semibold">
+                        {offerCount}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-[#23d391]/10 p-3">
+                      <p className="text-[9px] text-[#68e4ae]/60">
+                        Selected
+                      </p>
+                      <p className="mt-1 text-xl font-semibold text-[#68e4ae]">
+                        {selectedCount}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Error */}
+          {error && (
+            <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <BellRing size={17} className="mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* ===================================================
+              PRIMARY KPI ROW
+          ==================================================== */}
+          <section className="mb-7 grid grid-cols-2 gap-3 md:grid-cols-4">
+
+            {/* Total */}
+            <div className="dashboard-card rounded-[1.6rem] border border-black/8 bg-white p-5 shadow-[0_12px_35px_rgba(15,20,40,0.04)]">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-black/30">
+                    Total
+                  </p>
+
+                  <p className="mt-2 text-3xl font-semibold tracking-[-0.05em]">
+                    {totalApplications}
+                  </p>
+
+                  <p className="mt-1 text-xs text-black/35">
+                    Applications
+                  </p>
+                </div>
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ece9ff] text-[#655db2]">
+                  <Briefcase size={18} />
+                </div>
+              </div>
+            </div>
+
+            {/* Active */}
+            <div className="dashboard-card rounded-[1.6rem] border border-black/8 bg-white p-5 shadow-[0_12px_35px_rgba(15,20,40,0.04)]">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-black/30">
+                    Active pipeline
+                  </p>
+
+                  <p className="mt-2 text-3xl font-semibold tracking-[-0.05em]">
+                    {activeApplications}
+                  </p>
+
+                  <p className="mt-1 text-xs text-black/35">
+                    Still in progress
+                  </p>
+                </div>
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f0eefc] text-[#756dc7]">
+                  <Activity size={18} />
+                </div>
+              </div>
+            </div>
+
+            {/* Interviews */}
+            <div className="dashboard-card rounded-[1.6rem] border border-black/8 bg-white p-5 shadow-[0_12px_35px_rgba(15,20,40,0.04)]">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-black/30">
+                    Interviews
+                  </p>
+
+                  <p className="mt-2 text-3xl font-semibold tracking-[-0.05em]">
+                    {interviewCount}
+                  </p>
+
+                  <p className="mt-1 text-xs text-black/35">
+                    In your pipeline
+                  </p>
+                </div>
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fff4df] text-[#b47a17]">
+                  <CalendarDays size={18} />
+                </div>
+              </div>
+            </div>
+
+            {/* Selected */}
+            <div className="dashboard-card rounded-[1.6rem] border border-[#23d391]/20 bg-[#f2fbf7] p-5 shadow-[0_12px_35px_rgba(35,211,145,0.05)]">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-[#23946d]/60">
+                    Selected
+                  </p>
+
+                  <p className="mt-2 text-3xl font-semibold tracking-[-0.05em] text-[#157753]">
+                    {selectedCount}
+                  </p>
+
+                  <p className="mt-1 text-xs text-[#218c68]/60">
+                    Career wins
+                  </p>
+                </div>
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#23a976] shadow-sm">
+                  <CheckCircle2 size={18} />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ===================================================
+              PRODUCTIVITY
+          ==================================================== */}
+          <section className="mb-8">
+            <div className="mb-4 flex items-end justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-[#23af79]">
+                  Today
+                </p>
+
+                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.04em]">
+                  Your productivity
+                </h2>
+              </div>
+
+              <Link
+                to="/applications"
+                className="hidden items-center gap-1 text-xs font-semibold text-black/40 transition hover:text-black sm:flex"
+              >
+                View applications
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            <div className="overflow-hidden rounded-[2rem] border border-black/8 bg-white shadow-[0_15px_50px_rgba(15,20,40,0.05)]">
+              <ProductivitySummary
+                applications={applications}
+                onOpenApplication={(applicationId) =>
+                  navigate(`/applications/${applicationId}`)
+                }
+                onOpenEmail={handleOpenEmail}
+                onCompleteFollowUp={handleCompleteFollowUp}
+                onViewApplications={() =>
+                  navigate("/applications")
+                }
+              />
+            </div>
+          </section>
+
+          {/* ===================================================
+              ANALYTICS HEADER
+          ==================================================== */}
+          <section className="mb-8">
+            <div className="mb-4 flex items-end justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-[#23af79]">
+                  Performance
+                </p>
+
+                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.04em]">
+                  Career analytics
+                </h2>
+              </div>
+
+              <div className="hidden items-center gap-2 rounded-full border border-black/8 bg-white px-3 py-2 text-[10px] text-black/40 sm:flex">
+                <BarChart3 size={13} />
+                Based on your applications
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+
+              {/* Response */}
+              <div className="dashboard-card rounded-[1.6rem] border border-black/8 bg-white p-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-black/30">
+                    Response
+                  </span>
+
+                  <TrendingUp size={17} className="text-[#7168c2]" />
+                </div>
+
+                <p className="mt-5 text-3xl font-semibold tracking-[-0.05em]">
+                  {analytics.responseRate}%
+                </p>
+
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#eeecf7]">
+                  <div
+                    className="h-full rounded-full bg-[#8178d1]"
+                    style={{
+                      width: `${Math.min(
+                        analytics.responseRate,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="mt-2 text-[10px] text-black/35">
+                  Applications receiving a response
+                </p>
+              </div>
+
+              {/* Interview */}
+              <div className="dashboard-card rounded-[1.6rem] border border-black/8 bg-white p-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-black/30">
+                    Interview
+                  </span>
+
+                  <Target size={17} className="text-[#b27a16]" />
+                </div>
+
+                <p className="mt-5 text-3xl font-semibold tracking-[-0.05em]">
+                  {analytics.interviewRate}%
+                </p>
+
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#f5ecd9]">
+                  <div
+                    className="h-full rounded-full bg-[#d19b3b]"
+                    style={{
+                      width: `${Math.min(
+                        analytics.interviewRate,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="mt-2 text-[10px] text-black/35">
+                  Applications reaching interview
+                </p>
+              </div>
+
+              {/* Offer */}
+              <div className="dashboard-card rounded-[1.6rem] border border-black/8 bg-white p-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-black/30">
+                    Offer
+                  </span>
+
+                  <Award size={17} className="text-[#8064c5]" />
+                </div>
+
+                <p className="mt-5 text-3xl font-semibold tracking-[-0.05em]">
+                  {analytics.offerRate}%
+                </p>
+
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#eee8fa]">
+                  <div
+                    className="h-full rounded-full bg-[#8b72d1]"
+                    style={{
+                      width: `${Math.min(
+                        analytics.offerRate,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="mt-2 text-[10px] text-black/35">
+                  Applications reaching offer
+                </p>
+              </div>
+
+              {/* Selection */}
+              <div className="dashboard-card rounded-[1.6rem] border border-[#23d391]/20 bg-[#fbfffd] p-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#23946d]/55">
+                    Selection
+                  </span>
+
+                  <CheckCircle2
+                    size={17}
+                    className="text-[#23a976]"
+                  />
+                </div>
+
+                <p className="mt-5 text-3xl font-semibold tracking-[-0.05em] text-[#167957]">
+                  {analytics.selectionRate}%
+                </p>
+
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#dff4ea]">
+                  <div
+                    className="h-full rounded-full bg-[#23af79]"
+                    style={{
+                      width: `${Math.min(
+                        analytics.selectionRate,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="mt-2 text-[10px] text-[#278867]/55">
+                  Applications resulting in selection
+                </p>
+              </div>
+
+              {/* Active */}
+              <div className="dashboard-card rounded-[1.6rem] border border-black/8 bg-white p-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-black/30">
+                    Pipeline
+                  </span>
+
+                  <Briefcase size={17} className="text-[#7168c2]" />
+                </div>
+
+                <p className="mt-5 text-3xl font-semibold tracking-[-0.05em]">
+                  {activeApplications}
+                </p>
+
+                <p className="mt-3 text-[10px] text-black/35">
+                  Opportunities still in progress
+                </p>
+              </div>
+
+              {/* Follow-up */}
+              <div className="dashboard-card rounded-[1.6rem] border border-black/8 bg-white p-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-black/30">
+                    Follow-ups
+                  </span>
+
+                  <Check size={17} className="text-[#23af79]" />
+                </div>
+
+                <p className="mt-5 text-3xl font-semibold tracking-[-0.05em]">
+                  {followUpCompletionRate}%
+                </p>
+
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e6f5ee]">
+                  <div
+                    className="h-full rounded-full bg-[#23af79]"
+                    style={{
+                      width: `${Math.min(
+                        followUpCompletionRate,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+
+                <p className="mt-2 text-[10px] text-black/35">
+                  Follow-ups completed
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ===================================================
+              RESUME + ACTIVITY CHART
+          ==================================================== */}
+          <section className="mb-8 grid gap-5 lg:grid-cols-[0.75fr_1.25fr]">
+
+            {/* Resume */}
+            <div className="dashboard-card rounded-[2rem] border border-black/8 bg-white p-6 sm:p-7">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#23af79]">
+                    Career asset
+                  </p>
+
+                  <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em]">
+                    Your resume
+                  </h2>
+
+                  <p className="mt-1 text-xs text-black/35">
+                    Keep your latest version ready for applications.
+                  </p>
+                </div>
+
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ece9ff] text-[#655db2]">
+                  <FileText size={19} />
+                </div>
+              </div>
+
+              {resumeUrl ? (
+                <>
+                  <div className="mt-6 rounded-[1.5rem] bg-[#f1fbf6] p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#23a976] shadow-sm">
+                        <CheckCircle2 size={18} />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[#176f52]">
+                          Resume ready
+                        </p>
+
+                        <p className="mt-0.5 truncate text-[10px] text-[#2c8c6c]/70">
+                          {resume?.name || "Saved resume"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        window.open(
+                          resumeUrl,
+                          "_blank",
+                          "noopener,noreferrer"
+                        )
+                      }
+                      className="flex items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-3 py-2.5 text-xs font-semibold text-black/65 transition hover:bg-black/[0.02]"
+                    >
+                      <Eye size={15} />
+                      View
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDeleteResume}
+                      disabled={deletingResume}
+                      className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                    >
+                      {deletingResume ? (
+                        <Loader2
+                          size={15}
+                          className="animate-spin"
+                        />
+                      ) : (
+                        <Trash2 size={15} />
+                      )}
+
+                      Delete
+                    </button>
+                  </div>
+
+                  <label className="mt-2.5 flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0a1026] px-4 py-3 text-xs font-semibold text-white transition hover:-translate-y-0.5">
+                    <Upload size={15} />
+                    Replace resume
+
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleResumeUpload}
+                      className="hidden"
+                      disabled={uploadingResume}
+                    />
+                  </label>
+                </>
               ) : (
+                <div className="mt-6">
+                  <div className="rounded-[1.5rem] border border-dashed border-black/12 bg-[#fafafa] p-7 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#ece9ff] text-[#655db2]">
+                      <FileText size={21} />
+                    </div>
+
+                    <p className="mt-4 text-sm font-semibold">
+                      No resume uploaded
+                    </p>
+
+                    <p className="mt-1 text-[10px] leading-5 text-black/35">
+                      PDF, DOC or DOCX · maximum 5 MB
+                    </p>
+                  </div>
+
+                  <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0a1026] px-4 py-3 text-xs font-semibold text-white transition hover:-translate-y-0.5">
+                    {uploadingResume ? (
+                      <>
+                        <Loader2
+                          size={15}
+                          className="animate-spin"
+                        />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={15} />
+                        Upload resume
+                      </>
+                    )}
+
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleResumeUpload}
+                      className="hidden"
+                      disabled={uploadingResume}
+                    />
+                  </label>
+                </div>
+              )}
+
+              {resumeMessage && (
+                <p
+                  className={`mt-3 text-center text-xs ${
+                    resumeMessage
+                      .toLowerCase()
+                      .includes("success")
+                      ? "text-emerald-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {resumeMessage}
+                </p>
+              )}
+            </div>
+
+            {/* Activity chart */}
+            <div className="dashboard-card rounded-[2rem] border border-black/8 bg-white p-6 sm:p-7">
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#23af79]">
+                    Application activity
+                  </p>
+
+                  <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em]">
+                    Where your applications stand
+                  </h2>
+
+                  <p className="mt-1 text-xs text-black/35">
+                    A quick view of your current hiring pipeline.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 rounded-full bg-[#f4f3fb] px-3 py-2 text-[10px] font-medium text-[#6f67bd]">
+                  <Activity size={13} />
+                  Live data
+                </div>
+              </div>
+
+              <div className="mt-6 h-[280px] w-full">
+                {loading ? (
+                  <div className="flex h-full items-center justify-center text-xs text-black/35">
+                    Loading chart...
+                  </div>
+                ) : (
+                  <ResponsiveContainer
+                    width="100%"
+                    height="100%"
+                  >
+                    <BarChart
+                      data={chartData}
+                      margin={{
+                        top: 10,
+                        right: 10,
+                        left: -20,
+                        bottom: 0,
+                      }}
+                    >
+                      <CartesianGrid
+                        strokeDasharray="4 4"
+                        vertical={false}
+                        stroke="#ececf1"
+                      />
+
+                      <XAxis
+                        dataKey="status"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fontSize: 10,
+                          fill: "#8b8b95",
+                        }}
+                      />
+
+                      <YAxis
+                        allowDecimals={false}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fontSize: 10,
+                          fill: "#8b8b95",
+                        }}
+                      />
+
+                      <Tooltip
+                        cursor={{
+                          fill: "rgba(113,105,205,0.05)",
+                        }}
+                        contentStyle={{
+                          borderRadius: "14px",
+                          border: "1px solid #ececf1",
+                          boxShadow:
+                            "0 15px 35px rgba(15,20,40,0.08)",
+                          fontSize: "11px",
+                        }}
+                      />
+
+                      <Bar
+                        dataKey="count"
+                        fill="#8279d4"
+                        radius={[7, 7, 0, 0]}
+                        barSize={30}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* ===================================================
+              FUNNEL + INSIGHT
+          ==================================================== */}
+          <section className="mb-8 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+
+            {/* Funnel */}
+            <div className="dashboard-card rounded-[2rem] border border-black/8 bg-white p-6 sm:p-7">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#23af79]">
+                    Pipeline flow
+                  </p>
+
+                  <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em]">
+                    Application funnel
+                  </h2>
+
+                  <p className="mt-1 text-xs text-black/35">
+                    Watch opportunities move from application to selection.
+                  </p>
+                </div>
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f1efff] text-[#7168c2]">
+                  <TrendingUp size={18} />
+                </div>
+              </div>
+
+              <div className="mt-5 h-[250px] w-full">
                 <ResponsiveContainer
                   width="100%"
                   height="100%"
                 >
-                  <BarChart data={chartData}>
-
+                  <BarChart
+                    data={funnelData}
+                    layout="vertical"
+                    margin={{
+                      top: 5,
+                      right: 15,
+                      left: 15,
+                      bottom: 5,
+                    }}
+                  >
                     <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={false}
+                      strokeDasharray="4 4"
+                      horizontal={false}
+                      stroke="#ececf1"
                     />
 
                     <XAxis
-                      dataKey="status"
-                      tick={{ fontSize: 12 }}
+                      type="number"
+                      allowDecimals={false}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{
+                        fontSize: 10,
+                        fill: "#8b8b95",
+                      }}
                     />
 
                     <YAxis
-                      allowDecimals={false}
-                      tick={{ fontSize: 12 }}
+                      type="category"
+                      dataKey="stage"
+                      width={90}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{
+                        fontSize: 10,
+                        fill: "#55555f",
+                      }}
                     />
 
-                    <Tooltip />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "14px",
+                        border: "1px solid #ececf1",
+                        boxShadow:
+                          "0 15px 35px rgba(15,20,40,0.08)",
+                        fontSize: "11px",
+                      }}
+                    />
 
                     <Bar
                       dataKey="count"
-                      fill="#4f46e5"
-                      radius={[5, 5, 0, 0]}
+                      fill="#9a91e1"
+                      radius={[0, 7, 7, 0]}
+                      barSize={28}
                     />
-
                   </BarChart>
                 </ResponsiveContainer>
-              )}
-
+              </div>
             </div>
-          </div>
 
-        </div>
+            {/* Insight */}
+            <div className="relative overflow-hidden rounded-[2rem] bg-[#e8e5ff] p-7">
+              <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-[#9b91e9]/25 blur-3xl" />
 
-        {/* ==========================================
-            Application Funnel
-        ========================================== */}
+              <div className="relative z-10">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/70 text-[#655db2]">
+                  <BrainCircuit size={19} />
+                </div>
 
-        <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+                <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6f67bd]">
+                  JobTrack insight
+                </p>
 
-          <div className="mb-6">
-            <h2 className="font-semibold text-gray-900">
-              Application Funnel
-            </h2>
+                <h3 className="mt-2 text-2xl font-semibold leading-[1.05] tracking-[-0.04em]">
+                  Your dashboard should tell you what to do next.
+                </h3>
 
-            <p className="mt-1 text-sm text-gray-500">
-              See how applications move through your hiring pipeline.
-            </p>
-          </div>
+                <p className="mt-4 text-sm leading-6 text-black/50">
+                  Use follow-ups, interviews and AI analysis together so your
+                  next action is always visible.
+                </p>
 
-          <div className="h-72 w-full">
+                <div className="mt-7 rounded-2xl bg-white/60 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold">
+                      Follow-up completion
+                    </span>
 
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-            >
-              <BarChart
-                data={funnelData}
-                layout="vertical"
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
+                    <span className="text-sm font-semibold text-[#655db2]">
+                      {followUpCompletionRate}%
+                    </span>
+                  </div>
+
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
+                    <div
+                      className="h-full rounded-full bg-[#7f77d4]"
+                      style={{
+                        width: `${Math.min(
+                          followUpCompletionRate,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <Link
+                  to="/ai-analyzer"
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#0a1026] px-4 py-2.5 text-xs font-semibold text-white transition hover:-translate-y-0.5"
+                >
+                  Explore AI assistant
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          {/* ===================================================
+              RECENT APPLICATIONS
+          ==================================================== */}
+          <section className="mb-8">
+            <div className="mb-4 flex items-end justify-between">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.17em] text-[#23af79]">
+                  Latest activity
+                </p>
+
+                <h2 className="mt-1 text-2xl font-semibold tracking-[-0.04em]">
+                  Recent applications
+                </h2>
+              </div>
+
+              <Link
+                to="/applications"
+                className="flex items-center gap-1 text-xs font-semibold text-[#7168c2] transition hover:text-[#51499d]"
               >
-
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  horizontal={false}
-                />
-
-                <XAxis
-                  type="number"
-                  allowDecimals={false}
-                />
-
-                <YAxis
-                  type="category"
-                  dataKey="stage"
-                  width={90}
-                />
-
-                <Tooltip />
-
-                <Bar
-                  dataKey="count"
-                  fill="#6366f1"
-                  radius={[0, 5, 5, 0]}
-                  barSize={35}
-                />
-
-              </BarChart>
-            </ResponsiveContainer>
-
-          </div>
-        </div>
-
-        {/* ==========================================
-            Recent Applications
-        ========================================== */}
-
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-
-          <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
-
-            <div>
-              <h2 className="font-semibold text-gray-900">
-                Recent Applications
-              </h2>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Your latest job applications
-              </p>
+                View all
+                <ChevronRight size={14} />
+              </Link>
             </div>
+
+            <div className="overflow-hidden rounded-[2rem] border border-black/8 bg-white shadow-[0_15px_50px_rgba(15,20,40,0.05)]">
+              {loading ? (
+                <div className="p-10 text-center text-sm text-black/35">
+                  Loading applications...
+                </div>
+              ) : recentApplications.length === 0 ? (
+                <div className="p-10 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ece9ff] text-[#655db2]">
+                    <Briefcase size={22} />
+                  </div>
+
+                  <h3 className="mt-5 text-lg font-semibold">
+                    Your pipeline is empty
+                  </h3>
+
+                  <p className="mt-2 text-sm text-black/40">
+                    Add your first application and start building your
+                    career pipeline.
+                  </p>
+
+                  <Link
+                    to="/applications/add"
+                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0a1026] px-5 py-3 text-xs font-semibold text-white"
+                  >
+                    <Plus size={15} />
+                    Add application
+                  </Link>
+                </div>
+              ) : (
+                <div className="divide-y divide-black/5">
+                  {recentApplications.map((application) => {
+                    const statusStyle = getStatusStyle(
+                      application.status
+                    );
+
+                    return (
+                      <button
+                        key={application._id}
+                        type="button"
+                        onClick={() =>
+                          navigate(
+                            `/applications/${application._id}`
+                          )
+                        }
+                        className="group flex w-full flex-col gap-4 px-5 py-5 text-left transition hover:bg-[#fafafa] sm:px-6 lg:flex-row lg:items-center lg:justify-between"
+                      >
+                        <div className="flex min-w-0 items-center gap-4">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f0eefc] text-sm font-semibold text-[#655db2]">
+                            {application.company
+                              ?.charAt(0)
+                              ?.toUpperCase() || "J"}
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold">
+                              {application.position}
+                            </p>
+
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-black/35">
+                              <span className="font-medium text-[#655db2]">
+                                {application.company}
+                              </span>
+
+                              {application.location && (
+                                <>
+                                  <span>•</span>
+                                  <span>
+                                    {application.location}
+                                  </span>
+                                </>
+                              )}
+
+                              {application.jobType && (
+                                <>
+                                  <span>•</span>
+                                  <span>
+                                    {application.jobType}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-4 sm:justify-end">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-semibold ${statusStyle.pill}`}
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`}
+                            />
+
+                            {application.status}
+                          </span>
+
+                          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-black/8 text-black/25 transition group-hover:border-black/15 group-hover:text-black/60">
+                            <ArrowRight size={14} />
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* ===================================================
+              BOTTOM ACTION STRIP
+          ==================================================== */}
+          <section className="mb-6 grid gap-3 sm:grid-cols-3">
+
+            <Link
+              to="/applications/add"
+              className="group rounded-[1.6rem] border border-black/8 bg-white p-5 transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ece9ff] text-[#655db2]">
+                  <Plus size={18} />
+                </div>
+
+                <ArrowRight
+                  size={15}
+                  className="text-black/20 transition group-hover:translate-x-1 group-hover:text-black/50"
+                />
+              </div>
+
+              <p className="mt-5 text-sm font-semibold">
+                Add application
+              </p>
+
+              <p className="mt-1 text-[10px] leading-5 text-black/35">
+                Add a new opportunity to your pipeline.
+              </p>
+            </Link>
+
+            <Link
+              to="/ai-analyzer"
+              className="group rounded-[1.6rem] bg-[#0a1026] p-5 text-white transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#aaa3ff]">
+                  <BrainCircuit size={18} />
+                </div>
+
+                <ArrowRight
+                  size={15}
+                  className="text-white/25 transition group-hover:translate-x-1 group-hover:text-white/70"
+                />
+              </div>
+
+              <p className="mt-5 text-sm font-semibold">
+                Analyze a job
+              </p>
+
+              <p className="mt-1 text-[10px] leading-5 text-white/40">
+                Compare your resume and uncover skill gaps.
+              </p>
+            </Link>
 
             <Link
               to="/applications"
-              className="text-sm font-medium text-indigo-600 transition hover:text-indigo-700"
+              className="group rounded-[1.6rem] border border-[#23d391]/20 bg-[#effbf6] p-5 transition hover:-translate-y-1 hover:shadow-lg"
             >
-              View all
+              <div className="flex items-center justify-between">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[#23a976]">
+                  <Briefcase size={18} />
+                </div>
+
+                <ArrowRight
+                  size={15}
+                  className="text-[#23a976]/30 transition group-hover:translate-x-1 group-hover:text-[#23a976]"
+                />
+              </div>
+
+              <p className="mt-5 text-sm font-semibold text-[#155e45]">
+                Manage pipeline
+              </p>
+
+              <p className="mt-1 text-[10px] leading-5 text-[#278867]/55">
+                Search, filter and manage every application.
+              </p>
             </Link>
+          </section>
 
-          </div>
+          {/* Footer */}
+          <footer className="pb-5 pt-4 text-center">
+            <p className="text-[10px] text-black/25">
+              JobTrack · Keep your career organized.
+            </p>
+          </footer>
+        </main>
 
-          {loading ? (
-            <div className="p-8 text-center text-sm text-gray-500">
-              Loading applications...
-            </div>
-          ) : recentApplications.length === 0 ? (
-            <div className="p-10 text-center">
-
-              <Briefcase
-                size={30}
-                className="mx-auto text-gray-400"
-              />
-
-              <p className="mt-3 font-medium text-gray-700">
-                No applications yet
-              </p>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Add your first application to start tracking.
-              </p>
-
-              <Link
-                to="/applications/add"
-                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700"
-              >
-                <Plus size={16} />
-                Add Application
-              </Link>
-
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-
-              {recentApplications.map((application) => (
-                <button
-                  key={application._id}
-                  type="button"
-                  onClick={() =>
-                    navigate(
-                      `/applications/${application._id}`
-                    )
-                  }
-                  className="flex w-full flex-col gap-3 px-6 py-5 text-left transition hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
-                >
-
-                  <div>
-
-                    <h3 className="font-medium text-gray-900">
-                      {application.position}
-                    </h3>
-
-                    <p className="mt-1 text-sm text-indigo-600">
-                      {application.company}
-                    </p>
-
-                    {application.location && (
-                      <p className="mt-1 text-xs text-gray-400">
-                        {application.location}
-                      </p>
-                    )}
-
-                  </div>
-
-                  <span
-                    className={`w-fit rounded-full border px-3 py-1 text-xs font-medium ${getStatusStyle(
-                      application.status
-                    )}`}
-                  >
-                    {application.status}
-                  </span>
-
-                </button>
-              ))}
-
-            </div>
-          )}
-
-        </div>
-
-      </main>
-
-      {/* ==========================================
-          Follow-up Email Modal
-      ========================================== */}
-
-      {selectedEmailApplication && (
-        <FollowUpEmailModal
-          application={{
-            ...selectedEmailApplication,
-            userName: user?.name || "",
-          }}
-          onClose={handleCloseEmail}
-        />
-      )}
-
+        {/* =====================================================
+            EMAIL MODAL
+        ====================================================== */}
+        {selectedEmailApplication && (
+          <FollowUpEmailModal
+            application={{
+              ...selectedEmailApplication,
+              userName: user?.name || "",
+            }}
+            onClose={handleCloseEmail}
+          />
+        )}
+      </div>
     </div>
   );
 }

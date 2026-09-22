@@ -5,6 +5,7 @@ import {
   Navigate,
 } from "react-router-dom";
 
+import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -20,11 +21,13 @@ function App() {
     <BrowserRouter>
       <Routes>
 
+        {/* Public Landing Page */}
         <Route
           path="/"
-          element={<Navigate to="/login" />}
+          element={<LandingPage />}
         />
 
+        {/* Authentication */}
         <Route
           path="/login"
           element={<Login />}
@@ -35,6 +38,7 @@ function App() {
           element={<Register />}
         />
 
+        {/* Dashboard */}
         <Route
           path="/dashboard"
           element={
@@ -44,6 +48,7 @@ function App() {
           }
         />
 
+        {/* Applications */}
         <Route
           path="/applications"
           element={
@@ -80,14 +85,21 @@ function App() {
           }
         />
 
+        {/* AI Career Assistant */}
         <Route
-  path="/ai-analyzer"
-  element={
-    <ProtectedRoute>
-      <AIAnalyzer />
-    </ProtectedRoute>
-  }
-/>
+          path="/ai-analyzer"
+          element={
+            <ProtectedRoute>
+              <AIAnalyzer />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Fallback */}
+        <Route
+          path="*"
+          element={<Navigate to="/" replace />}
+        />
 
       </Routes>
     </BrowserRouter>
@@ -95,4 +107,3 @@ function App() {
 }
 
 export default App;
-

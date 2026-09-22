@@ -232,7 +232,9 @@ interviewDuration,
 interviewType,
 interviewLocation,
     });
+ 
 
+    
     await addActivity({
       application: application._id,
       user: req.user.userId,
